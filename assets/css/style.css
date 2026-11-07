@@ -1,0 +1,1432 @@
+/* =========================================================================
+   STYLESHEET - MỘC MIÊN BOOKS (GIAO DIỆN XANH BLUE PASTEL HIỆN ĐẠI & DỊU MẮT)
+   ========================================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Allura&family=Quicksand:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --primary: #3b82f6;
+    --primary-dark: #2563eb;
+    --primary-light: #60a5fa;
+    --primary-soft: #eff6ff;
+    --primary-border: #bfdbfe;
+    --primary-pastel: #dbeafe;
+    --accent: #0284c7;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --bg-body: #f8fbff;
+    --card-shadow: 0 8px 24px rgba(59, 130, 246, 0.12);
+    --gradient-main: linear-gradient(90deg, #60a5fa 0%, #3b82f6 100%);
+    --gradient-card: linear-gradient(135deg, #60a5fa 0%, #93c5fd 100%);
+}
+
+/* Theme Hồng Pastel */
+body.theme-pink {
+    --primary: #d63384;
+    --primary-dark: #c2185b;
+    --primary-light: #ff69b4;
+    --primary-soft: #fff0f5;
+    --primary-border: #ffc1e3;
+    --primary-pastel: #ffd6e7;
+    --accent: #e8648c;
+    --text-main: #3d2c2e;
+    --text-muted: #7a6a6c;
+    --bg-body: #ffffff;
+    --card-shadow: 0 8px 24px rgba(214, 51, 132, 0.1);
+    --gradient-main: linear-gradient(90deg, #ff9a9e 0%, #ff69b4 100%);
+    --gradient-card: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+}
+
+/* Theme Vintage Nhà Sách */
+body.theme-vintage {
+    --primary: #8b5e3c;
+    --primary-dark: #6f4528;
+    --primary-light: #b07d56;
+    --primary-soft: #fdf6f0;
+    --primary-border: #e6ccb2;
+    --primary-pastel: #eddcd2;
+    --accent: #9c6644;
+    --text-main: #3b2f2f;
+    --text-muted: #6c584c;
+    --bg-body: #fffdf9;
+    --card-shadow: 0 8px 24px rgba(139, 94, 60, 0.12);
+    --gradient-main: linear-gradient(90deg, #b07d56 0%, #8b5e3c 100%);
+    --gradient-card: linear-gradient(135deg, #b08968 0%, #ddb892 100%);
+}
+
+/* Theme Xanh Rêu Tri Thức */
+body.theme-emerald {
+    --primary: #2d6a4f;
+    --primary-dark: #1b4332;
+    --primary-light: #40916c;
+    --primary-soft: #f0f9f4;
+    --primary-border: #b7e4c7;
+    --primary-pastel: #d8f3dc;
+    --accent: #40916c;
+    --text-main: #1b4332;
+    --text-muted: #52796f;
+    --bg-body: #f9fdfb;
+    --card-shadow: 0 8px 24px rgba(45, 106, 79, 0.12);
+    --gradient-main: linear-gradient(90deg, #52b788 0%, #2d6a4f 100%);
+    --gradient-card: linear-gradient(135deg, #40916c 0%, #95d5b2 100%);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Quicksand', sans-serif;
+    color: var(--text-main);
+    background-color: var(--bg-body);
+    overflow-x: hidden;
+    margin: 0;
+    padding-bottom: 65px;
+}
+
+@media (min-width: 992px) {
+    body {
+        padding-bottom: 0;
+    }
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.25s ease;
+}
+
+/* =========================================================================
+   1. TOPBAR & HEADER
+   ========================================================================= */
+.top-automation-bar {
+    background: linear-gradient(90deg, var(--primary-dark), var(--primary), var(--primary-light));
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 7px 0;
+}
+
+.top-automation-bar .badge-free-tool {
+    background: rgba(255, 255, 255, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    color: #fff;
+    border-radius: 50px;
+    padding: 2px 10px;
+    font-size: 11.5px;
+    margin-left: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.site-header {
+    background: #ffffff;
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.07);
+    padding-top: 10px;
+    padding-bottom: 6px;
+}
+
+.logo-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.logo-badge {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: var(--primary-soft);
+    border: 2.5px solid var(--primary-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-size: 26px;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.16);
+    flex-shrink: 0;
+}
+
+.logo-text-wrap .brand-name {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--primary);
+    line-height: 1.1;
+    letter-spacing: -0.3px;
+}
+
+.logo-text-wrap .brand-sub {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+/* Slogan Pill ở giữa */
+.babibo-slogan-wrap {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.babibo-slogan {
+    position: relative;
+    background: var(--gradient-main);
+    color: #ffffff;
+    font-family: 'Quicksand', sans-serif;
+    font-size: 16.5px;
+    font-weight: 700;
+    text-align: center;
+    padding: 11px 54px;
+    margin: 4px auto;
+    width: fit-content;
+    max-width: 96%;
+    border-radius: 999px;
+    border: 2.5px solid var(--primary-pastel);
+    line-height: 1.3;
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.22);
+}
+
+.babibo-slogan .paw {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 19px;
+    color: #ffffff;
+}
+
+.babibo-slogan .paw-left {
+    left: 18px;
+}
+
+.babibo-slogan .paw-right {
+    right: 18px;
+}
+
+.babibo-slogan p {
+    margin: 0;
+}
+
+/* Cụm nút hành động bên phải Header */
+.header-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.btn-action-header {
+    position: relative;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--primary-soft);
+    color: var(--primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    border: 1.5px solid var(--primary-border);
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.btn-action-header:hover {
+    background: var(--primary);
+    color: #fff;
+    transform: translateY(-2px);
+}
+
+.btn-action-header .items-number {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: var(--primary-dark);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    min-width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #fff;
+}
+
+/* Thanh Menu ngang */
+.menu-container {
+    width: 100%;
+    margin-top: 8px;
+    border-top: 1px dashed var(--primary-border);
+    padding-top: 6px;
+}
+
+.menu-section ul {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    gap: 4px;
+}
+
+.menu-section ul li {
+    position: relative;
+}
+
+.menu-section ul li > a {
+    display: flex;
+    align-items: center;
+    color: var(--primary-dark);
+    font-weight: 700;
+    font-size: 15px;
+    padding: 8px 14px;
+    text-transform: uppercase;
+    border-radius: 20px;
+    transition: all 0.25s ease;
+}
+
+.menu-section ul li > a:hover,
+.menu-section ul li > a.active {
+    color: var(--primary);
+    background: var(--primary-soft);
+    transform: translateY(-2px);
+}
+
+.paw-icon {
+    margin-right: 7px;
+    font-size: 14px;
+    color: var(--primary-light);
+    transition: transform 0.25s ease;
+}
+
+.menu-section ul li > a:hover .paw-icon {
+    color: var(--primary);
+    transform: rotate(15deg) scale(1.15);
+}
+
+/* Dropdown danh mục trong Menu */
+.menu-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 250px;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 12px 30px rgba(59, 130, 246, 0.16);
+    border: 2px solid var(--primary-border);
+    padding: 10px;
+    display: none;
+    z-index: 1050;
+}
+
+.menu-section ul li:hover .menu-dropdown {
+    display: block;
+    animation: fadeInUp 0.2s ease;
+}
+
+.menu-dropdown a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 14px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text-main);
+    text-transform: none;
+}
+
+.menu-dropdown a:hover {
+    background: var(--primary-soft);
+    color: var(--primary);
+    padding-left: 18px;
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* =========================================================================
+   2. HERO BANNER SLIDER
+   ========================================================================= */
+.hero-banner-wrap {
+    position: relative;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+    margin-top: 12px;
+    margin-bottom: 35px;
+}
+
+.hero-slide {
+    min-height: 410px;
+    padding: 45px 40px;
+    display: flex;
+    align-items: center;
+    position: relative;
+    background-size: cover;
+    background-position: center;
+}
+
+.hero-slide::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(95deg, rgba(15, 38, 74, 0.86) 0%, rgba(37, 99, 235, 0.68) 55%, rgba(147, 197, 253, 0.25) 100%);
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 610px;
+    color: #fff;
+}
+
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    padding: 6px 16px;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 13.5px;
+    margin-bottom: 16px;
+}
+
+.hero-title {
+    font-size: 36px;
+    font-weight: 800;
+    line-height: 1.22;
+    margin-bottom: 14px;
+    text-shadow: 0 3px 12px rgba(0, 0, 0, 0.25);
+}
+
+.hero-desc {
+    font-size: 16px;
+    opacity: 0.95;
+    line-height: 1.6;
+    margin-bottom: 24px;
+}
+
+.btn-cute-primary {
+    background: var(--gradient-main);
+    color: #fff !important;
+    font-weight: 700;
+    padding: 12px 30px;
+    border-radius: 50px;
+    border: 2px solid #fff;
+    box-shadow: 0 6px 18px rgba(59, 130, 246, 0.35);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.btn-cute-primary:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 10px 24px rgba(59, 130, 246, 0.48);
+}
+
+.btn-cute-outline {
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--primary) !important;
+    font-weight: 700;
+    padding: 12px 26px;
+    border-radius: 50px;
+    border: 2px solid var(--primary-border);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.btn-cute-outline:hover {
+    background: var(--primary);
+    color: #fff !important;
+    border-color: var(--primary);
+}
+
+/* =========================================================================
+   3. BUBBLE CATEGORY SECTION
+   ========================================================================= */
+.section-cute-category {
+    background-color: var(--primary-soft);
+    padding: 40px 20px;
+    border-radius: 24px;
+    margin-bottom: 35px;
+    border: 2px solid var(--primary-pastel);
+}
+
+.cute-title {
+    color: var(--primary-dark);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-size: 26px;
+}
+
+.cute-subtitle {
+    color: var(--primary);
+    font-style: italic;
+    font-size: 1.12em;
+    font-weight: 600;
+}
+
+.cate-bubble-card {
+    text-align: center;
+    padding: 10px;
+    cursor: pointer;
+    transition: all 0.35s ease;
+}
+
+.cate-bubble-card:hover {
+    transform: translateY(-8px);
+}
+
+.cate-bubble-img-wrap {
+    width: 145px;
+    height: 145px;
+    margin: 0 auto;
+    border-radius: 50%;
+    border: 4px solid #ffffff;
+    box-shadow: 0 6px 18px rgba(59, 130, 246, 0.18);
+    overflow: hidden;
+    background: #fff;
+    position: relative;
+    transition: all 0.35s ease;
+}
+
+.cate-bubble-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    transition: all 0.35s ease;
+}
+
+.cate-bubble-card:hover .cate-bubble-img-wrap {
+    transform: scale(1.06) rotate(3deg);
+    border-color: var(--primary-light);
+    box-shadow: 0 10px 25px rgba(59, 130, 246, 0.32);
+}
+
+.prd-cate-title {
+    color: var(--primary-dark);
+    font-weight: 800;
+    margin-top: 14px;
+    font-size: 15.5px;
+}
+
+.cout-prd {
+    color: var(--primary);
+    font-size: 13.5px;
+    font-style: italic;
+    font-weight: 600;
+}
+
+/* =========================================================================
+   4. PRODUCT SECTION & CARDS
+   ========================================================================= */
+.section-fash-sale {
+    background-color: var(--primary-soft);
+    padding: 32px 24px;
+    border-radius: 24px;
+    margin-bottom: 35px;
+    border: 1.5px solid var(--primary-pastel);
+}
+
+.title-section {
+    color: var(--primary-dark);
+    font-weight: 800;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0;
+}
+
+.title-section .dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--primary);
+    display: inline-block;
+    box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.2);
+    animation: pulseDot 1.8s infinite;
+}
+
+@keyframes pulseDot {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.25); }
+}
+
+.product-item {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 14px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border: 1.5px solid var(--primary-pastel);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.product-item:hover {
+    transform: translateY(-6px);
+    border-color: var(--primary-light);
+    box-shadow: 0 12px 28px rgba(59, 130, 246, 0.16);
+}
+
+.product-item .inner-image {
+    position: relative;
+    border-radius: 15px;
+    overflow: hidden;
+    aspect-ratio: 1 / 1;
+    background: #fdfdfd;
+    margin-bottom: 12px;
+}
+
+.product-item .inner-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.45s ease;
+}
+
+.product-item:hover .inner-image img {
+    transform: scale(1.07);
+}
+
+.product-status {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.product-status span {
+    font-size: 11.5px;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 50px;
+    color: #fff;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+.product-status .onsale {
+    background: linear-gradient(45deg, #0284c7, #38bdf8);
+}
+
+.product-status .featured {
+    background: linear-gradient(45deg, var(--primary-dark), var(--primary-light));
+}
+
+.product-action {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%) translateY(15px);
+    opacity: 0;
+    display: flex;
+    gap: 8px;
+    z-index: 4;
+    transition: all 0.3s ease;
+}
+
+.product-item:hover .product-action {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+.btn-product-action {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.95);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--primary-border);
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.btn-product-action:hover {
+    background: var(--primary);
+    color: #fff;
+    transform: scale(1.1);
+}
+
+.product-category-tag {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.product-title {
+    font-size: 15.5px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 5px 0 4px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 42px;
+    line-height: 1.35;
+}
+
+.product-title a:hover {
+    color: var(--primary);
+}
+
+.product-author {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.price-wrap {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.price-amount {
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 17.5px;
+}
+
+.price-amount.old-price {
+    color: #94a3b8;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: line-through;
+}
+
+.product-card-footer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.btn-card-cart {
+    background: var(--primary-soft);
+    color: var(--primary-dark);
+    border: 1.5px solid var(--primary-border);
+    border-radius: 50px;
+    padding: 7px 10px;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-card-cart:hover {
+    background: var(--primary);
+    color: #fff;
+}
+
+.btn-card-vietqr {
+    background: var(--gradient-main);
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    padding: 7px 10px;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(59, 130, 246, 0.25);
+    transition: 0.2s;
+}
+
+.btn-card-vietqr:hover {
+    filter: brightness(1.06);
+    transform: translateY(-1px);
+}
+
+/* =========================================================================
+   5. QUY TRÌNH ĐẶT SÁCH & DỊCH VỤ ĐẶC QUYỀN
+   ========================================================================= */
+.automation-flow-section {
+    background: linear-gradient(135deg, var(--primary-soft) 0%, #f8fbff 50%, var(--primary-pastel) 100%);
+    border: 2px dashed var(--primary-light);
+    border-radius: 26px;
+    padding: 36px 24px;
+    margin-bottom: 40px;
+}
+
+.flow-step-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 20px 16px;
+    text-align: center;
+    height: 100%;
+    border: 2px solid var(--primary-pastel);
+    box-shadow: 0 6px 18px rgba(59, 130, 246, 0.08);
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.flow-step-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--primary);
+}
+
+.flow-step-num {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--primary);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+    padding: 3px 12px;
+    border-radius: 50px;
+}
+
+.flow-icon-circle {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--primary-soft);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    margin: 10px auto 14px;
+}
+
+.tool-pill {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 50px;
+    background: var(--primary-soft);
+    color: var(--primary-dark);
+    border: 1px solid var(--primary-border);
+    margin-top: 6px;
+}
+
+/* =========================================================================
+   6. FEEDBACK KHÁCH HÀNG & BLOG TIN TỨC
+   ========================================================================= */
+.bg-feedback {
+    background: linear-gradient(135deg, var(--primary-soft) 0%, var(--primary-pastel) 100%);
+    border-radius: 24px;
+    padding: 40px 25px;
+    margin-bottom: 40px;
+    border: 2px solid #fff;
+    box-shadow: var(--card-shadow);
+}
+
+.feedback-item {
+    background: #fff;
+    border-radius: 20px;
+    padding: 24px;
+    height: 100%;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    border: 1.5px solid var(--primary-pastel);
+}
+
+.feedback-item .avatar-img {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--primary-light);
+}
+
+.article-item {
+    background: #fff;
+    border-radius: 20px;
+    overflow: hidden;
+    height: 100%;
+    border: 1.5px solid var(--primary-pastel);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.04);
+    transition: all 0.3s ease;
+}
+
+.article-item:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 26px rgba(59, 130, 246, 0.14);
+}
+
+.article-item .article-img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+/* =========================================================================
+   7. KHUNG GỬI LỜI NHẮN & LIÊN HỆ TRỰC TIẾP
+   ========================================================================= */
+.contact-dashed-box {
+    background-color: var(--primary-soft);
+    border: 2px dashed var(--primary-light);
+    border-radius: 25px;
+    padding: 30px;
+    height: 100%;
+}
+
+.contact-dashed-box .form-control {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1.5px solid var(--primary-border);
+    border-radius: 15px;
+    background: #fff;
+    font-size: 14.5px;
+}
+
+.contact-dashed-box .form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.contact-gradient-box {
+    background: var(--gradient-card);
+    padding: 30px;
+    color: #fff;
+    border-radius: 25px;
+    height: 100%;
+    border: 4px solid #fff;
+    box-shadow: 0 10px 20px rgba(147, 197, 253, 0.38);
+}
+
+/* =========================================================================
+   8. FOOTER BO CONG & NÚT SOCIAL WIGGLE
+   ========================================================================= */
+.site-footer {
+    background-color: var(--primary-soft) !important;
+    font-family: 'Quicksand', sans-serif !important;
+    border-top-left-radius: 50% 24px;
+    border-top-right-radius: 50% 24px;
+    padding-top: 48px;
+    padding-bottom: 24px;
+    position: relative;
+    border-top: 3px solid var(--primary-pastel);
+    color: var(--text-main);
+}
+
+.title-footer {
+    color: var(--primary-dark) !important;
+    font-size: 18px !important;
+    font-weight: 800 !important;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    letter-spacing: 0.8px;
+}
+
+.footer-menu-section ul li {
+    margin-bottom: 10px;
+}
+
+.footer-menu-section ul li a {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    transition: 0.3s;
+}
+
+.footer-menu-section ul li a:hover {
+    color: var(--primary);
+    transform: translateX(6px);
+}
+
+.footer-menu-section .icon-mini {
+    font-size: 12px;
+    margin-right: 8px;
+    color: var(--primary);
+}
+
+/* Nút mạng xã hội có icon góc lắc lư (Wiggle) */
+.social-container {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    align-items: center;
+}
+
+.btn-wrapper {
+    position: relative;
+    display: inline-block;
+    transition: transform 0.2s ease;
+}
+
+.btn-wrapper:hover {
+    transform: scale(1.05);
+}
+
+.corner-icon {
+    position: absolute;
+    top: -14px;
+    right: -10px;
+    font-size: 30px;
+    z-index: 10;
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));
+    cursor: default;
+    animation: wiggle 2s infinite ease-in-out;
+    transform-origin: bottom center;
+}
+
+@keyframes wiggle {
+    0%, 100% { transform: rotate(-10deg); }
+    50% { transform: rotate(10deg); }
+}
+
+.cute-btn {
+    display: flex;
+    align-items: center;
+    width: 215px;
+    height: 50px;
+    padding-left: 22px;
+    color: white !important;
+    text-decoration: none !important;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 16.5px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.18);
+    border: 3px solid white;
+    position: relative;
+    overflow: hidden;
+}
+
+.bg-tiktok { background: linear-gradient(45deg, #0f172a, #475569); }
+.bg-facebook { background: linear-gradient(45deg, #1877F2, #60a5fa); }
+.bg-instagram { background: linear-gradient(45deg, #3b82f6, #8b5cf6, #ec4899); }
+.bg-zalo { background: linear-gradient(45deg, #0284c7, #38bdf8); }
+
+.cute-btn span {
+    margin-right: 12px;
+    font-size: 20px;
+}
+
+/* =========================================================================
+   9. NÚT LIÊN HỆ NỔI GÓC DƯỚI PHẢI (.nut-lien-he-noi)
+   ========================================================================= */
+.nut-lien-he-noi {
+    position: fixed;
+    bottom: 24px;
+    right: 20px;
+    z-index: 9990;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+@media (max-width: 991.98px) {
+    .nut-lien-he-noi {
+        bottom: 72px;
+    }
+}
+
+.item-lien-he {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.22);
+    transition: transform 0.3s;
+    text-decoration: none;
+    cursor: pointer;
+    border: 2px solid #fff;
+}
+
+.item-lien-he img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.item-lien-he:hover {
+    transform: scale(1.12);
+}
+
+@keyframes rung-lac {
+    0% { transform: rotate(0) scale(1) skew(1deg); }
+    10% { transform: rotate(-25deg) scale(1) skew(1deg); }
+    20% { transform: rotate(25deg) scale(1) skew(1deg); }
+    30% { transform: rotate(-25deg) scale(1) skew(1deg); }
+    40% { transform: rotate(25deg) scale(1) skew(1deg); }
+    50% { transform: rotate(0) scale(1) skew(1deg); }
+    100% { transform: rotate(0) scale(1) skew(1deg); }
+}
+
+.hieu-ung-rung {
+    animation: rung-lac 1.5s infinite;
+    background: #0ea5e9;
+}
+
+.icon-phone-svg {
+    fill: white;
+    width: 24px;
+    height: 24px;
+}
+
+/* =========================================================================
+   10. SIDEBAR MINI-CART & VIETQR MOBILE PAYMENT UI
+   ========================================================================= */
+.sidebar-mini-cart {
+    position: fixed;
+    top: 0;
+    right: -420px;
+    width: 100%;
+    max-width: 400px;
+    height: 100vh;
+    background: #fff;
+    z-index: 10000;
+    box-shadow: -8px 0 30px rgba(0, 0, 0, 0.18);
+    transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-mini-cart.open {
+    right: 0;
+}
+
+.cart-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 9998;
+    display: none;
+}
+
+.cart-backdrop.show {
+    display: block;
+}
+
+/* Giao diện VietQR trên Di động */
+.vietqr-card-frame {
+    background: linear-gradient(145deg, #ffffff, #eff6ff);
+    border: 2.5px solid var(--primary);
+    border-radius: 24px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 12px 32px rgba(59, 130, 246, 0.18);
+}
+
+.qr-scanner-box {
+    position: relative;
+    display: inline-block;
+    padding: 12px;
+    background: #fff;
+    border-radius: 18px;
+    border: 2px solid var(--primary-border);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+.qr-laser-line {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #38bdf8, #2563eb, #38bdf8, transparent);
+    box-shadow: 0 0 12px #38bdf8;
+    animation: scanLaser 2.4s infinite ease-in-out;
+    pointer-events: none;
+}
+
+@keyframes scanLaser {
+    0% { top: 14px; opacity: 0.9; }
+    50% { top: calc(100% - 16px); opacity: 1; }
+    100% { top: 14px; opacity: 0.9; }
+}
+
+.bank-info-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fff;
+    border: 1px solid var(--primary-pastel);
+    border-radius: 12px;
+    padding: 9px 14px;
+    margin-bottom: 8px;
+}
+
+.btn-copy-mini {
+    background: var(--primary-soft);
+    color: var(--primary-dark);
+    border: 1px solid var(--primary-border);
+    border-radius: 8px;
+    padding: 3px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.btn-copy-mini:hover {
+    background: var(--primary);
+    color: #fff;
+}
+
+/* Thanh điều hướng cố định dưới đáy màn hình điện thoại (Mobile Bottom Bar) */
+.mobile-bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 62px;
+    background: #ffffff;
+    border-top: 2px solid var(--primary-pastel);
+    box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.08);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 9980;
+}
+
+.mobile-bottom-nav .nav-item-mob {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    position: relative;
+    cursor: pointer;
+}
+
+.mobile-bottom-nav .nav-item-mob i {
+    font-size: 18px;
+    margin-bottom: 2px;
+    color: var(--primary);
+}
+
+.mobile-bottom-nav .nav-item-mob.active {
+    color: var(--primary-dark);
+}
+
+/* Toast Notification */
+.custom-toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 100000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.custom-toast {
+    background: #fff;
+    border-left: 5px solid var(--primary);
+    border-radius: 14px;
+    padding: 13px 18px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 280px;
+    max-width: 360px;
+    animation: fadeInUp 0.25s ease;
+}
+
+/* =========================================================================
+   11. KHUNG CHAT TRỰC TUYẾN ĐA KÊNH VỚI SHOP (ZALO / MESSENGER / FB / IG / TIKTOK)
+   ========================================================================= */
+.shop-chat-popup {
+    position: fixed;
+    bottom: 24px;
+    right: 82px;
+    width: 355px;
+    max-width: calc(100vw - 28px);
+    background: #ffffff;
+    border-radius: 22px;
+    box-shadow: 0 16px 42px rgba(15, 38, 74, 0.24);
+    border: 2px solid var(--primary-pastel);
+    z-index: 9995;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: fadeInUp 0.25s ease;
+}
+
+@media (max-width: 575.98px) {
+    .shop-chat-popup {
+        right: 14px;
+        bottom: 76px;
+        width: calc(100vw - 28px);
+    }
+}
+
+.shop-chat-header {
+    padding: 13px 15px;
+    color: #fff;
+    background: linear-gradient(135deg, #2563eb, #38bdf8);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.shop-chat-avatar-wrap {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.22);
+    border: 2px solid #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    position: relative;
+}
+
+.shop-chat-avatar-wrap .online-dot {
+    position: absolute;
+    bottom: -1px;
+    right: -1px;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: #22c55e;
+    border: 2px solid #fff;
+}
+
+.shop-chat-channels {
+    display: flex;
+    gap: 5px;
+    padding: 8px 10px;
+    background: var(--primary-soft);
+    border-bottom: 1px solid var(--primary-pastel);
+    overflow-x: auto;
+}
+
+.chat-channel-pill {
+    border: 1px solid var(--primary-border);
+    background: #fff;
+    color: var(--text-main);
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 50px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.chat-channel-pill.active,
+.chat-channel-pill:hover {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
+
+.shop-chat-messages {
+    height: 255px;
+    overflow-y: auto;
+    padding: 14px;
+    background: #f8fbff;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.chat-msg-row {
+    display: flex;
+    flex-direction: column;
+    max-width: 85%;
+    font-size: 13.5px;
+    line-height: 1.45;
+}
+
+.chat-msg-row.shop {
+    align-self: flex-start;
+}
+
+.chat-msg-row.user {
+    align-self: flex-end;
+}
+
+.chat-bubble {
+    padding: 10px 13px;
+    border-radius: 16px;
+}
+
+.chat-msg-row.shop .chat-bubble {
+    background: #ffffff;
+    color: var(--text-main);
+    border: 1px solid var(--primary-pastel);
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.chat-msg-row.user .chat-bubble {
+    background: var(--primary);
+    color: #ffffff;
+    border-bottom-right-radius: 4px;
+}
+
+.shop-chat-quick-replies {
+    display: flex;
+    gap: 6px;
+    padding: 8px 10px;
+    background: #fff;
+    border-top: 1px solid #eef2f6;
+    overflow-x: auto;
+}
+
+.shop-chat-quick-replies button {
+    border: 1px solid var(--primary-border);
+    background: var(--primary-soft);
+    color: var(--primary-dark);
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 50px;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.shop-chat-quick-replies button:hover {
+    background: var(--primary);
+    color: #fff;
+}
+
+.shop-chat-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #fff;
+    border-top: 1px solid var(--primary-pastel);
+}

@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mộc Miên Books – Chiến Dịch Ưu Đãi Sách & Set Quà Tặng Tri Thức</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="assets/css/style.css" rel="stylesheet">
+    <style>
+        .ladi-hero {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 50%, #e0f2fe 100%);
+            padding: 50px 0;
+            border-bottom: 3px dashed var(--primary-border);
+        }
+        .ladi-stat-box {
+            background: #fff;
+            border-radius: 22px;
+            padding: 24px 16px;
+            text-align: center;
+            border: 2px solid var(--primary-pastel);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.1);
+        }
+        .ladi-stat-num {
+            font-size: 36px;
+            font-weight: 800;
+            color: var(--primary);
+        }
+        .ladi-order-box {
+            background: #fff;
+            border-radius: 28px;
+            padding: 32px;
+            border: 3px solid var(--primary);
+            box-shadow: 0 14px 35px rgba(59, 130, 246, 0.2);
+        }
+        .countdown-box {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        .cd-item {
+            background: var(--primary);
+            color: #fff;
+            width: 66px;
+            height: 66px;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            box-shadow: 0 5px 12px rgba(59, 130, 246, 0.28);
+        }
+        .cd-item span {
+            font-size: 22px;
+            line-height: 1.1;
+        }
+        .cd-item small {
+            font-size: 10px;
+            opacity: 0.9;
+            text-transform: uppercase;
+        }
+        .team-card {
+            background: #fff;
+            border-radius: 22px;
+            padding: 22px;
+            text-align: center;
+            height: 100%;
+            border: 2px solid var(--primary-pastel);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+        }
+        .team-card:hover {
+            transform: translateY(-6px);
+            border-color: var(--primary);
+        }
+        .team-avatar {
+            width: 96px;
+            height: 96px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid var(--primary-light);
+            margin-bottom: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="toast-container" class="custom-toast-container"></div>
+
+    <!-- Thanh điều hướng quay lại Trang chủ -->
+    <div class="top-automation-bar py-2">
+        <div class="container d-flex justify-content-between align-items-center">
+            <a href="index.html" class="text-white fw-bold small">
+                <i class="fa-solid fa-arrow-left me-1"></i>Quay về Trang Chủ Tiệm Sách Mộc Miên
+            </a>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge-free-tool"><i class="fa-solid fa-gift"></i> Miễn phí Gói quà & Thiệp viết tay</span>
+                <a href="#ladi-form-section" class="btn btn-sm btn-light rounded-pill fw-bold text-primary py-0 px-3">Đặt Nhanh Ưu Đãi</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 1: HERO CAMPAIGN (CHUẨN MẪU BABIBO.BPTMAI02.ID.VN) -->
+    <section class="ladi-hero">
+        <div class="container">
+            <div class="row align-items-center g-4">
+                <div class="col-lg-6">
+                    <span class="badge rounded-pill px-3 py-2 mb-3" style="background:var(--primary);color:#fff;">
+                        ✨ CHIẾN DỊCH ƯU ĐÃI ĐẶC BIỆT MÙA ĐỌC SÁCH
+                    </span>
+                    <h1 class="display-5 fw-bolder mb-3" style="color:var(--primary);">
+                        Mộc Miên – Mở Trang Sách Mới, Đón Lộc Tri Thức
+                    </h1>
+                    <h4 class="fw-bold mb-3" style="color:var(--primary-light);">
+                        Đầu năm đọc sách – Cả năm bứt phá thành công 📚
+                    </h4>
+                    <div class="p-3 rounded-4 bg-white border mb-4 shadow-sm">
+                        <p class="mb-1 fw-semibold">✨ Giảm đến <strong>29%</strong> cho 3 Combo & Tựa sách được yêu thích nhất</p>
+                        <p class="mb-1 fw-semibold">📖 Cây Cam Ngọt – Tâm Lý Học Về Tiền – Set Quà Sách Bình Yên</p>
+                        <p class="mb-1 fw-semibold">🎁 Tặng kèm Thiệp viết tay + Bookmark nghệ thuật + Bọc Plastic</p>
+                        <p class="mb-0 fw-semibold text-danger">⚡ Đặt sách nhanh chóng – Miễn phí gói quà & giao hàng tận nơi!</p>
+                    </div>
+                    <div class="d-flex flex-wrap gap-3">
+                        <a href="#ladi-form-section" class="btn-cute-primary">
+                            <i class="fa-solid fa-bag-shopping"></i> Rinh Sách Liền Tay Ngay
+                        </a>
+                        <a href="#top-3-deal" class="btn-cute-outline">
+                            <i class="fa-solid fa-gift"></i> Xem 3 Deal Sách Xinh
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-6 text-center">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <img src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&w=600&q=80" class="img-fluid rounded-4 shadow border border-4 border-white" alt="Sách nổi bật">
+                        </div>
+                        <div class="col-6 mt-4">
+                            <img src="https://images.unsplash.com/photo-1513885535751-8b9238bd345a?auto=format&fit=crop&w=600&q=80" class="img-fluid rounded-4 shadow border border-4 border-white" alt="Set quà sách">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 2: 3 SẢN PHẨM / SET QUÀ ĐƯỢC YÊU THÍCH NHẤT (GIỐNG SECTION 323 CỦA BABIBO) -->
+    <section id="top-3-deal" class="py-5">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="cute-title">3 TỰA SÁCH & SET QUÀ ĐƯỢC SĂN ĐÓN NHẤT TẠI MỘC MIÊN</h2>
+                <p class="cute-subtitle">Mở đầu hành trình mới bằng một trang sách hay – món quà tri thức bền vững</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="product-item text-center p-4">
+                        <img src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&w=600&q=80" class="img-fluid rounded-4 mb-3" style="height:230px;object-fit:cover;" alt="Cây Cam Ngọt Của Tôi">
+                        <span class="badge bg-danger rounded-pill align-self-center mb-2">🔥 Giảm 20% + Tặng Bookmark</span>
+                        <h5 class="fw-bold" style="color:var(--primary);">Cây Cam Ngọt Của Tôi</h5>
+                        <p class="small text-muted">Nhỏ xinh – sâu lắng – đọc là chạm tới trái tim 💕</p>
+                        <div class="fs-5 fw-bolder text-danger mb-3">86,000 VND <small class="text-muted text-decoration-line-through fs-6">108,000 VND</small></div>
+                        <a href="#ladi-form-section" onclick="selectLadiProduct('86000', 'Cây Cam Ngọt Của Tôi (Bản Đặc Biệt)')" class="btn-cute-primary justify-content-center">Chọn Mua Ngay</a>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="product-item text-center p-4">
+                        <img src="https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&w=600&q=80" class="img-fluid rounded-4 mb-3" style="height:230px;object-fit:cover;" alt="Tâm Lý Học Về Tiền">
+                        <span class="badge bg-danger rounded-pill align-self-center mb-2">🔥 Best-seller Tài Chính</span>
+                        <h5 class="fw-bold" style="color:var(--primary);">Tâm Lý Học Về Tiền</h5>
+                        <p class="small text-muted">Làm chủ tư duy tài chính cá nhân – Mở lộc đầu năm 📈</p>
+                        <div class="fs-5 fw-bolder text-danger mb-3">145,000 VND <small class="text-muted text-decoration-line-through fs-6">189,000 VND</small></div>
+                        <a href="#ladi-form-section" onclick="selectLadiProduct('145000', 'Sách Tâm Lý Học Về Tiền')" class="btn-cute-primary justify-content-center">Chọn Mua Ngay</a>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="product-item text-center p-4">
+                        <img src="https://images.unsplash.com/photo-1513885535751-8b9238bd345a?auto=format&fit=crop&w=600&q=80" class="img-fluid rounded-4 mb-3" style="height:230px;object-fit:cover;" alt="Set Quà Sách Bình Yên">
+                        <span class="badge bg-danger rounded-pill align-self-center mb-2">🔥 Giảm 26% + Gói Quà & Thiệp</span>
+                        <h5 class="fw-bold" style="color:var(--primary);">Set Quà Sách 'Bình Yên'</h5>
+                        <p class="small text-muted">Vừa có sách hay – vừa có nến thơm & hoa khô – tặng là ghi điểm liền 💝</p>
+                        <div class="fs-5 fw-bolder text-danger mb-3">259,000 VND <small class="text-muted text-decoration-line-through fs-6">350,000 VND</small></div>
+                        <a href="#ladi-form-section" onclick="selectLadiProduct('259000', 'Set Quà Sách Bình Yên (Sách + Nến Thơm + Hoa Khô)')" class="btn-cute-primary justify-content-center">Chọn Mua Ngay</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 3: CON SỐ ẤN TƯỢNG & CÂU CHUYỆN THƯƠNG HIỆU (GIỐNG SECTION 226 BABIBO) -->
+    <section class="py-5" style="background:var(--primary-soft);">
+        <div class="container">
+            <div class="row align-items-center mb-4">
+                <div class="col-lg-5">
+                    <h2 class="cute-title">Vì Sao Độc Giả Yêu Thích Mộc Miên Books?</h2>
+                </div>
+                <div class="col-lg-7">
+                    <p class="mb-0 text-secondary">
+                        Mộc Miên Books bắt đầu từ một suy nghĩ giản dị: sẽ thế nào nếu mỗi cuốn sách trao đi đều mang theo hơi ấm của sự chỉn chu? Từ giấy in chống lóa, chiếc bookmark nhỏ xinh đến dịch vụ gói quà nghệ thuật và viết thiệp tay tận tâm.
+                    </p>
+                </div>
+            </div>
+            <div class="row g-3">
+                <div class="col-6 col-md-3">
+                    <div class="ladi-stat-box">
+                        <div class="ladi-stat-num">43+</div>
+                        <div class="fw-bold">Nhà Xuất Bản Đối Tác</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="ladi-stat-box">
+                        <div class="ladi-stat-num">12+</div>
+                        <div class="fw-bold">Tủ Sách Chuyên Đề</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="ladi-stat-box">
+                        <div class="ladi-stat-num">100%</div>
+                        <div class="fw-bold">Sách Bản Quyền</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="ladi-stat-box">
+                        <div class="ladi-stat-num">5.0★</div>
+                        <div class="fw-bold">Độc Giả Hài Lòng</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 4: 3 ĐẶC QUYỀN & FORM ĐẶT HÀNG NHANH (CHUẨN SECTION 250 BABIBO) -->
+    <section id="ladi-form-section" class="py-5">
+        <div class="container">
+            <div class="row g-4 align-items-center">
+                <div class="col-lg-6">
+                    <div class="p-4 rounded-4 h-100" style="background:var(--primary-soft);border:2px dashed var(--primary-light);">
+                        <h3 class="cute-title mb-3">3 Đặc Quyền Chỉ Có Tại Mộc Miên Books</h3>
+                        <ul class="lh-lg text-secondary ps-3">
+                            <li class="mb-3">
+                                <strong class="text-dark">1. Đặc quyền về Chất lượng Sách:</strong> Cam kết 100% sách bản quyền chính hãng từ NXB, giấy xốp chống lóa bảo vệ thị lực, hoàn tiền 200% nếu phát hiện sách lậu.
+                            </li>
+                            <li class="mb-3">
+                                <strong class="text-dark">2. Đặc quyền về Dịch vụ Quà tặng:</strong> "Bọc sách Plastic, Gói quà nghệ thuật & Tặng thiệp viết tay miễn phí". Mỗi đơn sách đều được đóng hộp chống sốc 2 lớp vuông vức.
+                            </li>
+                            <li class="mb-3">
+                                <strong class="text-dark">3. Đặc quyền Đặt hàng & Thanh toán Nhanh chóng:</strong> Hỗ trợ quét mã VietQR tự động điền sẵn số tiền và mã đơn hàng chỉ với 1 chạm, hoặc thanh toán khi nhận sách (COD) toàn quốc.
+                            </li>
+                        </ul>
+
+                        <div class="text-center mt-4">
+                            <div class="fw-bold mb-2 text-danger">⏰ ƯU ĐÃI FLASH SALE KẾT THÚC SAU:</div>
+                            <div class="countdown-box">
+                                <div class="cd-item"><span>00</span><small>Ngày</small></div>
+                                <div class="cd-item"><span id="lp-h">03</span><small>Giờ</small></div>
+                                <div class="cd-item"><span id="lp-m">45</span><small>Phút</small></div>
+                                <div class="cd-item"><span id="lp-s">18</span><small>Giây</small></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FORM CHỐT ĐƠN NHANH -->
+                <div class="col-lg-6">
+                    <div class="ladi-order-box">
+                        <div class="text-center mb-3">
+                            <span class="badge bg-danger rounded-pill px-3 py-1 mb-2">ƯU ĐÃI ĐẶT SÁCH TRỰC TUYẾN</span>
+                            <h4 class="fw-bolder" style="color:var(--primary);">Đăng Ký Mua Sách & Nhận Ưu Đãi Ngay</h4>
+                            <p class="small text-muted mb-0">Điền thông tin nhận sách bên dưới để hưởng trọn ưu đãi giảm tới 29%</p>
+                        </div>
+
+                        <form onsubmit="submitLadiPageOrder(event)">
+                            <div class="mb-3">
+                                <input id="lp-name" type="text" class="form-control form-control-lg rounded-3" placeholder="Họ và tên của bạn *" required>
+                            </div>
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <input id="lp-phone" type="tel" class="form-control form-control-lg rounded-3" placeholder="Số điện thoại *" required>
+                                </div>
+                                <div class="col-6">
+                                    <input id="lp-email" type="email" class="form-control form-control-lg rounded-3" placeholder="Email nhận hóa đơn">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <select id="lp-product" class="form-select form-select-lg rounded-3 fw-bold" style="color:var(--primary);" required>
+                                    <option value="259000|Set Quà Sách 'Bình Yên' (Sách + Nến Thơm + Hoa Khô)">🎁 Set Quà Sách 'Bình Yên' – 259.000đ (Giá gốc 350.000đ)</option>
+                                    <option value="299000|Set Quà Sách 'Mở Lộc Tri Thức' (Nhà Giả Kim + Bình Giữ Nhiệt)">🎁 Set Quà 'Mở Lộc Tri Thức' – 299.000đ (Giá gốc 420.000đ)</option>
+                                    <option value="249000|Combo Bứt Phá Bản Thân (Thói Quen Nguyên Tử + Tâm Lý Học Về Tiền)">📚 Combo 2 Sách Bứt Phá Bản Thân – 249.000đ</option>
+                                    <option value="86000|Cây Cam Ngọt Của Tôi (Phiên Bản Đặc Biệt)">📖 Cây Cam Ngọt Của Tôi – 86.000đ</option>
+                                    <option value="145000|Tâm Lý Học Về Tiền (Morgan Housel)">📈 Tâm Lý Học Về Tiền – 145.000đ</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <input id="lp-address" type="text" class="form-control rounded-3" placeholder="Địa chỉ nhận sách (Số nhà, Đường, Quận/Huyện, Tỉnh/TP) *" required>
+                            </div>
+                            <div class="mb-3">
+                                <input id="lp-note" type="text" class="form-control rounded-3" placeholder="Lời nhắn viết lên thiệp tay (Miễn phí)...">
+                            </div>
+                            <div class="mb-3">
+                                <label class="small fw-bold mb-2" style="color:var(--primary);">Phương thức thanh toán:</label>
+                                <div class="d-flex flex-column gap-2">
+                                    <label class="p-2 px-3 border rounded-3 bg-light d-flex align-items-center gap-2 cursor-pointer">
+                                        <input type="radio" name="lp-payment" value="VIETQR" checked>
+                                        <span class="small fw-bold"><i class="fa-solid fa-qrcode text-primary me-1"></i>Thanh toán trước qua mã QR Ngân hàng (Hiển thị mã VietQR ngay)</span>
+                                    </label>
+                                    <label class="p-2 px-3 border rounded-3 bg-light d-flex align-items-center gap-2 cursor-pointer">
+                                        <input type="radio" name="lp-payment" value="COD">
+                                        <span class="small fw-bold"><i class="fa-solid fa-money-bill-wave text-success me-1"></i>Thanh toán khi nhận sách (COD)</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-cute-primary w-100 justify-content-center py-3 fs-5">
+                                <i class="fa-solid fa-paper-plane me-2"></i>ĐẶT MUA NGAY!
+                            </button>
+                        </form>
+
+                        <!-- Khung hiển thị kết quả VietQR trực tiếp ngay dưới Form -->
+                        <div id="lp-vietqr-result" class="mt-4 d-none"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 5: ĐỘI NGŨ CỦA CHÚNG TÔI (CHUẨN SECTION 158 BABIBO) -->
+    <section class="py-5" style="background:var(--primary-soft);">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="cute-title">ĐỘI NGŨ CỦA CHÚNG TÔI</h2>
+                <p class="text-muted">Với tinh thần trách nhiệm và sự nhiệt huyết, chúng tôi không ngừng nỗ lực để mỗi cuốn sách trao tay đều đong đầy tri thức và yêu thương.</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-6 col-lg-3">
+                    <div class="team-card">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80" class="team-avatar" alt="Phương Anh">
+                        <h6 class="fw-bolder mb-1" style="color:var(--primary);">PHƯƠNG ANH</h6>
+                        <div class="small fw-bold text-muted mb-2">Quản lý Cửa hàng</div>
+                        <p class="small text-secondary mb-0">Người đặt nền móng cho Mộc Miên Books, định hướng tuyển chọn sách bản quyền và dịch vụ khách hàng tận tâm.</p>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="team-card">
+                        <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=300&q=80" class="team-avatar" alt="Minh Thư">
+                        <h6 class="fw-bolder mb-1" style="color:var(--primary);">MINH THƯ</h6>
+                        <div class="small fw-bold text-muted mb-2">Phụ trách Thiết kế & Quà tặng</div>
+                        <p class="small text-secondary mb-0">Chịu trách nhiệm sáng tạo hình ảnh và thiết kế các hộp quà tặng sách thủ công giàu cảm xúc.</p>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="team-card">
+                        <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=300&q=80" class="team-avatar" alt="Thúy Kiều">
+                        <h6 class="fw-bolder mb-1" style="color:var(--primary);">THÚY KIỀU</h6>
+                        <div class="small fw-bold text-muted mb-2">Phụ trách Vận hành & Đơn hàng</div>
+                        <p class="small text-secondary mb-0">Đảm bảo mọi đơn sách đều được bọc plastic phẳng đẹp, đóng gói chống sốc và giao nhanh đúng hẹn.</p>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <div class="team-card">
+                        <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=300&q=80" class="team-avatar" alt="Hoàng Hằng">
+                        <h6 class="fw-bolder mb-1" style="color:var(--primary);">HOÀNG HẰNG</h6>
+                        <div class="small fw-bold text-muted mb-2">Biên tập & Chăm sóc Độc giả</div>
+                        <p class="small text-secondary mb-0">Lắng nghe cảm nhận của bạn đọc, tư vấn tựa sách phù hợp và nắn nót từng tấm thiệp viết tay.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="py-4 text-center border-top bg-white">
+        <div class="container">
+            <p class="mb-2 fw-bold" style="color:var(--primary);">MỘC MIÊN BOOKS – CHẠM TỪNG TRANG SÁCH, GỬI NGÀN YÊU THƯƠNG</p>
+            <a href="index.html" class="btn btn-sm btn-outline-danger rounded-pill px-4 fw-bold">
+                <i class="fa-solid fa-store me-1"></i>Về Trang Chủ Website Bán Sách
+            </a>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/data.js"></script>
+    <script src="assets/js/app.js"></script>
+    <script>
+        function selectLadiProduct(price, name) {
+            const sel = document.getElementById("lp-product");
+            for (let i = 0; i < sel.options.length; i++) {
+                if (sel.options[i].value.startsWith(price + "|")) {
+                    sel.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+
+        function submitLadiPageOrder(e) {
+            e.preventDefault();
+            const name = document.getElementById("lp-name").value.trim();
+            const phone = document.getElementById("lp-phone").value.trim();
+            const email = document.getElementById("lp-email").value.trim();
+            const address = document.getElementById("lp-address").value.trim();
+            const note = document.getElementById("lp-note").value.trim();
+            const paymentMethod = document.querySelector('input[name="lp-payment"]:checked')?.value || "VIETQR";
+            const [priceStr, productTitle] = document.getElementById("lp-product").value.split("|");
+            const amount = Number(priceStr);
+
+            const orderCode = "LP" + Math.floor(10000 + Math.random() * 90000);
+            const transferContent = `MOCMIEN ${orderCode} ${phone}`;
+            const qrUrl = buildVietQRImageUrl(amount, transferContent);
+
+            const newOrder = {
+                code: orderCode,
+                createdAt: new Date().toLocaleString("vi-VN"),
+                customerName: name,
+                phone,
+                email: email || "khach.ladipage@gmail.com",
+                city: "Toàn quốc",
+                address,
+                giftWrap: true,
+                giftMessage: note,
+                items: [{ id: 999, title: productTitle, qty: 1, price: amount }],
+                subtotal: amount,
+                shippingFee: 0,
+                discount: 0,
+                total: amount,
+                paymentMethod,
+                paymentStatus: paymentMethod === "VIETQR" ? "CHỜ QUÉT VIETQR" : "THANH TOÁN KHI NHẬN HÀNG (COD)",
+                automationSync: "Đã ghi nhận đơn hàng"
+            };
+
+            AppState.orders.unshift(newOrder);
+            saveOrders();
+            triggerSalesAutomationWebhook(newOrder);
+
+            const resBox = document.getElementById("lp-vietqr-result");
+            resBox.classList.remove("d-none");
+            if (paymentMethod === "VIETQR") {
+                resBox.innerHTML = `
+                    <div class="vietqr-card-frame text-center">
+                        <span class="badge bg-success rounded-pill px-3 py-2 mb-2">
+                            <i class="fa-solid fa-check-circle me-1"></i>ĐÃ GHI NHẬN ĐƠN #${orderCode} – MÃ QR THANH TOÁN
+                        </span>
+                        <div class="fw-bold mb-1">${productTitle}</div>
+                        <div class="fs-5 fw-bolder text-danger mb-2">Số tiền: ${formatVND(amount)}</div>
+                        <div class="qr-scanner-box my-2">
+                            <div class="qr-laser-line"></div>
+                            <img src="${qrUrl}" alt="VietQR" class="img-fluid rounded-3" style="max-width:230px;">
+                        </div>
+                        <div class="small text-muted mt-2">
+                            Nội dung CK tự động: <strong class="text-success">${transferContent}</strong><br>
+                            Tài khoản nhận: <strong>${AppState.config.bankId} - ${AppState.config.accountNo} (${AppState.config.accountName})</strong>
+                        </div>
+                        <div class="mt-3 d-flex justify-content-center gap-2">
+                            <button type="button" class="btn btn-sm btn-success rounded-pill px-3 fw-bold" onclick="showToast('🎉 Đã xác nhận thanh toán VietQR cho đơn #' + '${orderCode}')">
+                                <i class="fa-solid fa-check me-1"></i>Tôi đã quét QR thanh toán
+                            </button>
+                            <a href="index.html" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold">Về trang chủ xem đơn</a>
+                        </div>
+                    </div>
+                `;
+                showToast(`Đã tạo đơn #${orderCode} và hiển thị mã QR thanh toán!`);
+            } else {
+                resBox.innerHTML = `
+                    <div class="vietqr-card-frame text-center">
+                        <span class="badge bg-primary rounded-pill px-3 py-2 mb-2">
+                            <i class="fa-solid fa-box-check me-1"></i>ĐẶT HÀNG THÀNH CÔNG – ĐƠN #${orderCode}
+                        </span>
+                        <div class="fw-bold mb-1">${productTitle}</div>
+                        <div class="fs-5 fw-bolder text-danger mb-2">Thanh toán khi nhận sách (COD): ${formatVND(amount)}</div>
+                        <p class="small text-muted mb-3">Mộc Miên Books sẽ liên hệ SĐT <strong>${phone}</strong> và giao sách tới: ${address}</p>
+                        <div class="d-flex justify-content-center gap-2">
+                            <a href="index.html" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold">Về trang chủ xem đơn</a>
+                        </div>
+                    </div>
+                `;
+                showToast(`Đã ghi nhận đơn đặt sách COD #${orderCode} thành công!`);
+            }
+            resBox.scrollIntoView({ behavior: "smooth" });
+        }
+    </script>
+</body>
+</html>
+
