@@ -1073,11 +1073,56 @@ function confirmVietQRPaymentSuccess(orderCode) {
     showToast(`🎉 Đơn hàng #${orderCode} đã được xác nhận thanh toán VietQR thành công!`);
 }
 
+// Hàm gửi dữ liệu tới Google Apps Script Web App (hỗ trợ đa trình duyệt, bỏ cookie đa tài khoản để tránh lỗi 302)
+function getGoogleSheetUrls() {
+    const urls = new Set();
+    if (SHOP_DEFAULT_CONFIG.googleSheetWebAppUrl && SHOP_DEFAULT_CONFIG.googleSheetWebAppUrl.startsWith("http")) {
+        urls.add(SHOP_DEFAULT_CONFIG.googleSheetWebAppUrl.trim());
+    }
+    if (AppState.config.googleSheetWebAppUrl && AppState.config.googleSheetWebAppUrl.startsWith("http")) {
+        urls.add(AppState.config.googleSheetWebAppUrl.trim());
+    }
+    // Đồng bộ dự phòng sang cả link Apps Script đầu tiên bạn tạo (nếu đang mở file Sheet đó)
+    urls.add("https://script.google.com/macros/s/AKfycbymzIMb8RLVM-d2K15fFBNjOyvCQvOTl32JWsvVi8Z5jXWx_pNTQo11jqRQLwGWOz7ZhA/exec");
+    return Array.from(urls);
+}
+
+async function sendPayloadToGoogleSheets(payload) {
+    const urls = getGoogleSheetUrls();
+    if (urls.length === 0) return false;
+    const bodyStr = JSON.stringify(payload);
+
+    await Promise.all(urls.map(async (url) => {
+        try {
+            await fetch(url, {
+                method: "POST",
+                credentials: "omit",
+                redirect: "follow",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: bodyStr
+            });
+        } catch (err) {
+            try {
+                await fetch(url, {
+                    method: "POST",
+                    mode: "no-cors",
+                    credentials: "omit",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: bodyStr
+                });
+            } catch (e2) {
+                console.warn("Google Sheets fallback error:", e2);
+            }
+        }
+    }));
+    return true;
+}
+
 // =========================================================================
 // ĐỒNG BỘ TỰ ĐỘNG ĐƠN HÀNG VỀ GOOGLE SHEETS (APPS SCRIPT) / MAKE.COM / FORM
 // =========================================================================
 async function triggerSalesAutomationWebhook(order, actionType = "create_order") {
-    const itemsSummary = order.items.map(i => `${i.title} (x${i.qty})`).join(", ");
+    const itemsSummary = (order.items || []).map(i => `${i.title} (x${i.qty})`).join(", ");
     const transferContent = `MOCMIEN ${order.code} ${order.phone}`;
     const payload = {
         action: actionType,
@@ -1093,7 +1138,7 @@ async function triggerSalesAutomationWebhook(order, actionType = "create_order")
         shipping_fee: order.shippingFee || 0,
         discount: order.discount || 0,
         total_amount: order.total,
-        payment_method: order.paymentMethod,
+        payment_method: order.paymentMethod || "VIETQR",
         payment_status: order.paymentStatus,
         gift_wrap: order.giftWrap ? "Có gói quà" : "Không",
         gift_message: order.giftMessage || "",
@@ -1103,21 +1148,10 @@ async function triggerSalesAutomationWebhook(order, actionType = "create_order")
     };
 
     // 1. Đổ dữ liệu trực tiếp về Google Sheets qua Google Apps Script Web App URL
-    const sheetUrl = (SHOP_DEFAULT_CONFIG.googleSheetWebAppUrl || AppState.config.googleSheetWebAppUrl || "").trim();
-    if (sheetUrl && sheetUrl.startsWith("http")) {
-        try {
-            await fetch(sheetUrl, {
-                method: "POST",
-                mode: "no-cors",
-                keepalive: true,
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify(payload)
-            });
-            order.automationSync = "Đã tự động đổ về Google Sheets";
-        } catch (err) {
-            console.warn("Google Sheets Webhook:", err);
-            order.automationSync = "Đã gửi dữ liệu tới Google Sheets";
-        }
+    const sentToSheet = await sendPayloadToGoogleSheets(payload);
+    if (sentToSheet) {
+        order.automationSync = "Đã tự động đổ về Google Sheets";
+        order.sheetSynced = true;
     }
 
     // 2. Nếu có cấu hình Make.com Webhook URL
@@ -1279,6 +1313,15 @@ function initFlashSaleTimer() {
     }, 1000);
 }
 
+// Tự động đẩy các đơn hàng đã đặt trong trình duyệt nhưng chưa đồng bộ lên Google Sheets
+async function syncPendingOrdersToGoogleSheet() {
+    if (!AppState.orders || AppState.orders.length === 0) return;
+    const pending = [...AppState.orders].reverse().filter(o => !o.sheetSynced);
+    for (const order of pending) {
+        await triggerSalesAutomationWebhook(order, "create_order");
+    }
+}
+
 // Gửi lời nhắn liên hệ (Đồng thời đổ về tab Lien_He trên Google Sheets nếu đã cấu hình)
 async function submitContactForm(event) {
     if (event) event.preventDefault();
@@ -1291,27 +1334,14 @@ async function submitContactForm(event) {
         return;
     }
 
-    const sheetUrl = (SHOP_DEFAULT_CONFIG.googleSheetWebAppUrl || AppState.config.googleSheetWebAppUrl || "").trim();
-    if (sheetUrl && sheetUrl.startsWith("http")) {
-        try {
-            fetch(sheetUrl, {
-                method: "POST",
-                mode: "no-cors",
-                keepalive: true,
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify({
-                    action: "contact_message",
-                    created_at: new Date().toLocaleString("vi-VN"),
-                    customer_name: name,
-                    phone,
-                    subject,
-                    message
-                })
-            });
-        } catch (err) {
-            console.warn("Google Sheets Contact:", err);
-        }
-    }
+    sendPayloadToGoogleSheets({
+        action: "contact_message",
+        created_at: new Date().toLocaleString("vi-VN"),
+        customer_name: name,
+        phone,
+        subject,
+        message
+    });
 
     showToast(`💌 Cảm ơn <strong>${name}</strong>! Mộc Miên Books đã nhận được lời nhắn và sẽ phản hồi sớm nhất!`);
     event.target.reset();
@@ -1325,6 +1355,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderAllSections();
     updateShopBrandingUI();
     initFlashSaleTimer();
+    syncPendingOrdersToGoogleSheet();
 
     // Cập nhật mã QR xem trước khi khách nhập SĐT trong form đặt hàng
     document.getElementById("ck-phone")?.addEventListener("input", () => {
