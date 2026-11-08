@@ -906,9 +906,28 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4">
+                    <!-- Thanh trạng thái kết nối Google Sheet -->
+                    <div class="p-3 mb-3 rounded-4 border bg-light d-flex flex-wrap align-items-center justify-content-between gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-success rounded-pill px-3 py-2"><i class="fa-solid fa-table me-1"></i>Google Sheets</span>
+                            <span class="small text-muted">Bảng tính: <a href="https://docs.google.com/spreadsheets/d/1LXKrbxyhrTaBuhIcTksOIys2YBZ0TgpWznCBH-SuQhM/edit?gid=0#gid=0" target="_blank" class="fw-bold text-primary text-decoration-underline">MocMienBooks_Orders</a></span>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="button" id="btn-test-gsheet" class="btn btn-sm btn-outline-primary rounded-pill fw-bold" onclick="testGoogleSheetConnection()">
+                                <i class="fa-solid fa-vial me-1"></i>Kiểm tra kết nối Google Sheet
+                            </button>
+                            <button type="button" id="btn-sync-all-gsheet" class="btn btn-sm btn-outline-success rounded-pill fw-bold" onclick="syncAllPendingOrdersToSheet()">
+                                <i class="fa-solid fa-cloud-arrow-up me-1"></i>Đồng bộ tất cả đơn lên Sheet
+                            </button>
+                            <a href="https://docs.google.com/spreadsheets/d/1LXKrbxyhrTaBuhIcTksOIys2YBZ0TgpWznCBH-SuQhM/edit?gid=0#gid=0" target="_blank" class="btn btn-sm btn-success rounded-pill fw-bold text-white">
+                                <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>Mở Google Sheet
+                            </a>
+                        </div>
+                    </div>
+
                     <div class="mb-3">
                         <h6 class="fw-bold mb-0">Các đơn sách bạn đã đặt tại Mộc Miên Books</h6>
-                        <small class="text-muted">Theo dõi trạng thái đơn hàng bạn đã đặt hoặc bấm vào "Thanh toán QR" nếu bạn chưa hoàn tất chuyển khoản.</small>
+                        <small class="text-muted">Theo dõi trạng thái đơn hàng bạn đã đặt hoặc bấm "Đẩy lên Sheet" nếu đơn chưa đồng bộ.</small>
                     </div>
                     <div class="table-responsive">
                         <table class="table table-hover align-middle border">
@@ -920,6 +939,7 @@
                                     <th>Sách Đã Đặt</th>
                                     <th>Tổng Tiền</th>
                                     <th>Trạng Thái</th>
+                                    <th>Google Sheet</th>
                                     <th>Thao Tác</th>
                                 </tr>
                             </thead>
@@ -1012,8 +1032,8 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/js/data.js?v=20261108-3"></script>
-    <script src="assets/js/app.js?v=20261108-3"></script>
+    <script src="assets/js/data.js?v=20261108-4"></script>
+    <script src="assets/js/app.js?v=20261108-4"></script>
 </body>
 
 </html>

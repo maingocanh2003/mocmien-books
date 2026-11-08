@@ -804,6 +804,13 @@ async function submitOrderAndGenerateVietQR(event) {
         automationSync: "Đang xử lý đơn hàng..."
     };
 
+    const submitBtn = document.getElementById("ck-submit-btn");
+    const originalBtnText = submitBtn ? submitBtn.innerHTML : "";
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin me-2"></i>Đang ghi nhận đơn & lưu Google Sheet...`;
+    }
+
     // Đóng modal checkout
     const ckModal = bootstrap.Modal.getInstance(document.getElementById("checkoutModal"));
     if (ckModal) ckModal.hide();
@@ -818,8 +825,17 @@ async function submitOrderAndGenerateVietQR(event) {
     renderSidebarCart();
     renderOrdersTable();
 
-    // Đồng bộ đơn hàng
-    triggerSalesAutomationWebhook(newOrder);
+    // Đồng bộ đơn hàng lên Google Sheet và chờ kết quả
+    try {
+        await triggerSalesAutomationWebhook(newOrder);
+    } catch (e) {
+        console.warn("Lỗi đồng bộ:", e);
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+        }
+    }
 
     // Nếu khách chọn Thanh toán trước (VIETQR) -> Hiển thị ngay màn hình QR thanh toán
     // Nếu khách chọn COD -> Hiển thị thông báo đặt hàng COD thành công (kèm nút xem QR nếu muốn trả trước)
@@ -848,6 +864,12 @@ function openCodOrderSuccessModal(order) {
                 <div class="d-flex justify-content-between small mb-1"><span>Người nhận:</span><strong>${order.customerName} (${order.phone})</strong></div>
                 <div class="d-flex justify-content-between small mb-1"><span>Địa chỉ giao:</span><strong>${order.address}</strong></div>
                 <div class="d-flex justify-content-between small mb-1"><span>Hình thức:</span><strong class="text-success">Thanh toán khi nhận hàng (COD)</strong></div>
+                <div class="d-flex justify-content-between small mb-1">
+                    <span>Google Sheets:</span>
+                    <strong class="${order.sheetSynced ? 'text-success' : 'text-primary'}">
+                        <i class="fa-solid fa-table me-1"></i>${order.sheetSynced ? 'Đã tự động lưu vào Google Sheet' : 'Đang đồng bộ Google Sheet...'}
+                    </strong>
+                </div>
                 <div class="d-flex justify-content-between border-top pt-2 mt-2">
                     <span class="fw-bold">Tổng tiền cần thanh toán khi nhận:</span>
                     <strong class="fs-5 text-danger">${formatVND(order.total)}</strong>
@@ -1220,7 +1242,7 @@ function renderOrdersTable() {
     if (AppState.orders.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="7" class="text-center py-5 text-muted">
+                <td colspan="8" class="text-center py-5 text-muted">
                     <i class="fa-solid fa-box-open fs-1 mb-2 d-block opacity-50" style="color:var(--primary);"></i>
                     Bạn chưa có đơn đặt sách nào.<br>
                     <small>Hãy chọn những cuốn sách yêu thích và tiến hành đặt hàng để theo dõi đơn tại đây nhé!</small>
@@ -1246,12 +1268,95 @@ function renderOrdersTable() {
                 </span>
             </td>
             <td>
+                ${o.sheetSynced ? 
+                    `<span class="badge bg-success rounded-pill px-2 py-1"><i class="fa-solid fa-check me-1"></i>Đã lên Sheet</span>` : 
+                    `<button class="btn btn-sm btn-outline-danger rounded-pill py-0 px-2 fw-bold" onclick="manuallySyncOrderToSheet('${o.code}')" title="Bấm để đồng bộ đơn này lên Google Sheet"><i class="fa-solid fa-cloud-arrow-up me-1"></i>Đẩy lên Sheet</button>`
+                }
+            </td>
+            <td>
                 <button class="btn btn-sm btn-outline-primary rounded-pill" onclick="reopenOrderQR('${o.code}')">
                     <i class="fa-solid fa-qrcode me-1"></i>Thanh toán QR
                 </button>
             </td>
         </tr>
     `).join("");
+}
+
+async function testGoogleSheetConnection() {
+    const btn = document.getElementById("btn-test-gsheet");
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin me-1"></i>Đang kiểm tra...`;
+    }
+    showToast("⏳ Đang gửi tín hiệu kiểm tra kết nối tới Google Sheet...", "info");
+    const pingCode = "PING" + Math.floor(1000 + Math.random() * 9000);
+    const payload = {
+        action: "create_order",
+        order_code: pingCode,
+        created_at: new Date().toLocaleString("vi-VN"),
+        customer_name: "Kiểm Tra Kết Nối Web",
+        phone: "0999999999",
+        email: "kiemtra@mocmien.vn",
+        address: "Website Mộc Miên Books",
+        items_summary: "Đơn kiểm tra kết nối tự động (x1)",
+        total_amount: 0,
+        payment_method: "TEST",
+        payment_status: "TEST KẾT NỐI",
+        gift_wrap: "Không",
+        gift_message: "Kiểm tra kết nối Google Sheet",
+        source: "Nút Kiểm Tra Trên Web"
+    };
+    try {
+        const ok = await sendPayloadToGoogleSheets(payload);
+        if (ok) {
+            showToast(`✅ Kết nối Google Sheet THÀNH CÔNG! Đơn test #${pingCode} đã được ghi vào bảng tính.`);
+        } else {
+            showToast("⚠️ Không nhận được phản hồi từ Google Sheet. Vui lòng kiểm tra lại URL hoặc kết nối mạng.", "warning");
+        }
+    } catch (err) {
+        showToast("❌ Lỗi kiểm tra Google Sheet: " + (err.message || err), "warning");
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fa-solid fa-vial me-1"></i>Kiểm tra kết nối Google Sheet`;
+        }
+    }
+}
+
+async function manuallySyncOrderToSheet(orderCode) {
+    const order = AppState.orders.find(o => o.code === orderCode);
+    if (!order) return;
+    showToast(`⏳ Đang đẩy đơn #${orderCode} lên Google Sheet...`, "info");
+    await triggerSalesAutomationWebhook(order, "create_order");
+    renderOrdersTable();
+}
+
+async function syncAllPendingOrdersToSheet() {
+    const btn = document.getElementById("btn-sync-all-gsheet");
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin me-1"></i>Đang đồng bộ...`;
+    }
+    if (!AppState.orders || AppState.orders.length === 0) {
+        showToast("Chưa có đơn hàng nào để đồng bộ!", "info");
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up me-1"></i>Đồng bộ tất cả đơn lên Sheet`;
+        }
+        return;
+    }
+    showToast("⏳ Đang đồng bộ toàn bộ đơn hàng lên Google Sheet...", "info");
+    let count = 0;
+    for (const order of AppState.orders) {
+        await triggerSalesAutomationWebhook(order, "create_order");
+        count++;
+    }
+    renderOrdersTable();
+    showToast(`✅ Đã đồng bộ ${count} đơn hàng lên Google Sheet!`);
+    if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up me-1"></i>Đồng bộ tất cả đơn lên Sheet`;
+    }
 }
 
 function reopenOrderQR(orderCode) {
