@@ -95,6 +95,9 @@ function doPost(e) {
           }
         }
       }
+      // Không tìm thấy mã đơn -> KHÔNG ghi thêm dòng rỗng
+      return ContentService.createTextOutput(JSON.stringify({ status: "not_found", order_code: data.order_code }))
+        .setMimeType(ContentService.MimeType.JSON);
     }
 
     // Ghi dòng đơn hàng mới vào cuối bảng (Thêm dấu ' trước SĐT để không bị mất số 0 ở đầu)

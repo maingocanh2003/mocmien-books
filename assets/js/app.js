@@ -1082,26 +1082,32 @@ function getGoogleSheetUrls() {
     if (AppState.config.googleSheetWebAppUrl && AppState.config.googleSheetWebAppUrl.startsWith("http")) {
         urls.add(AppState.config.googleSheetWebAppUrl.trim());
     }
-    // Đồng bộ dự phòng sang cả link Apps Script đầu tiên bạn tạo (nếu đang mở file Sheet đó)
-    urls.add("https://script.google.com/macros/s/AKfycbymzIMb8RLVM-d2K15fFBNjOyvCQvOTl32JWsvVi8Z5jXWx_pNTQo11jqRQLwGWOz7ZhA/exec");
     return Array.from(urls);
 }
 
+// Gửi dữ liệu và trả về true nếu Google Sheets xác nhận đã ghi (hoặc đã gửi đi ở chế độ dự phòng)
 async function sendPayloadToGoogleSheets(payload) {
     const urls = getGoogleSheetUrls();
-    if (urls.length === 0) return false;
+    if (urls.length === 0) {
+        console.warn("[Google Sheets] Chưa cấu hình googleSheetWebAppUrl trong data.js");
+        return false;
+    }
     const bodyStr = JSON.stringify(payload);
 
-    await Promise.all(urls.map(async (url) => {
+    const results = await Promise.all(urls.map(async (url) => {
         try {
-            await fetch(url, {
+            const res = await fetch(url, {
                 method: "POST",
                 credentials: "omit",
                 redirect: "follow",
                 headers: { "Content-Type": "text/plain;charset=utf-8" },
                 body: bodyStr
             });
+            const text = await res.text();
+            console.log("[Google Sheets] Phản hồi:", text);
+            return /"status"\s*:\s*"(success|updated)"/.test(text);
         } catch (err) {
+            console.warn("[Google Sheets] Lỗi gửi (thử lại chế độ no-cors):", err);
             try {
                 await fetch(url, {
                     method: "POST",
@@ -1110,12 +1116,14 @@ async function sendPayloadToGoogleSheets(payload) {
                     headers: { "Content-Type": "text/plain;charset=utf-8" },
                     body: bodyStr
                 });
+                return true;
             } catch (e2) {
-                console.warn("Google Sheets fallback error:", e2);
+                console.error("[Google Sheets] Không gửi được dữ liệu:", e2);
+                return false;
             }
         }
     }));
-    return true;
+    return results.some(Boolean);
 }
 
 // =========================================================================
@@ -1151,7 +1159,13 @@ async function triggerSalesAutomationWebhook(order, actionType = "create_order")
     const sentToSheet = await sendPayloadToGoogleSheets(payload);
     if (sentToSheet) {
         order.automationSync = "Đã tự động đổ về Google Sheets";
-        order.sheetSynced = true;
+        if (actionType === "create_order") {
+            order.sheetSynced = true;
+            showToast(`📊 Đơn #${order.code} đã được lưu vào Google Sheets`, "info");
+        }
+    } else {
+        order.automationSync = "Chưa lưu được vào Google Sheets (sẽ tự thử lại khi tải lại trang)";
+        showToast(`⚠️ Chưa lưu được đơn #${order.code} vào Google Sheets. Kiểm tra kết nối mạng / tắt trình chặn quảng cáo rồi tải lại trang.`, "warning");
     }
 
     // 2. Nếu có cấu hình Make.com Webhook URL
