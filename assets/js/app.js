@@ -349,7 +349,7 @@ function resetCatalogueFilter() {
 // =========================================================================
 // GIỎ HÀNG, YÊU THÍCH & SO SÁNH
 // =========================================================================
-function addToCart(productId, qty = 1) {
+function addToCart(productId, qty = 1, showToastNotification = true) {
     const product = PRODUCTS.find(p => p.id === Number(productId));
     if (!product) return;
 
@@ -369,7 +369,9 @@ function addToCart(productId, qty = 1) {
     }
     saveCart();
     renderSidebarCart();
-    showToast(`Đã thêm <strong>"${product.title}"</strong> vào giỏ hàng!`);
+    if (showToastNotification) {
+        showToast(`Đã thêm <strong>"${product.title}"</strong> vào giỏ hàng!`);
+    }
 }
 
 function updateCartQty(productId, delta) {
@@ -443,9 +445,9 @@ function renderSidebarCart() {
     totalEl.textContent = formatVND(sum);
 }
 
-// Mua ngay 1 chạm -> Mở thẳng Checkout VietQR
+// Mua ngay 1 chạm -> Mở thẳng Checkout VietQR (không hiển thị toast đã thêm vào giỏ)
 function buyNowVietQR(productId, qty = 1) {
-    addToCart(productId, qty);
+    addToCart(productId, qty, false);
     openCheckoutModal();
 }
 
@@ -808,7 +810,7 @@ async function submitOrderAndGenerateVietQR(event) {
     const originalBtnText = submitBtn ? submitBtn.innerHTML : "";
     if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin me-2"></i>Đang ghi nhận đơn & lưu Google Sheet...`;
+        submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin me-2"></i>Đang xử lý đơn hàng...`;
     }
 
     // Đóng modal checkout
@@ -864,12 +866,6 @@ function openCodOrderSuccessModal(order) {
                 <div class="d-flex justify-content-between small mb-1"><span>Người nhận:</span><strong>${order.customerName} (${order.phone})</strong></div>
                 <div class="d-flex justify-content-between small mb-1"><span>Địa chỉ giao:</span><strong>${order.address}</strong></div>
                 <div class="d-flex justify-content-between small mb-1"><span>Hình thức:</span><strong class="text-success">Thanh toán khi nhận hàng (COD)</strong></div>
-                <div class="d-flex justify-content-between small mb-1">
-                    <span>Google Sheets:</span>
-                    <strong class="${order.sheetSynced ? 'text-success' : 'text-primary'}">
-                        <i class="fa-solid fa-table me-1"></i>${order.sheetSynced ? 'Đã tự động lưu vào Google Sheet' : 'Đang đồng bộ Google Sheet...'}
-                    </strong>
-                </div>
                 <div class="d-flex justify-content-between border-top pt-2 mt-2">
                     <span class="fw-bold">Tổng tiền cần thanh toán khi nhận:</span>
                     <strong class="fs-5 text-danger">${formatVND(order.total)}</strong>
@@ -1183,11 +1179,10 @@ async function triggerSalesAutomationWebhook(order, actionType = "create_order")
         order.automationSync = "Đã tự động đổ về Google Sheets";
         if (actionType === "create_order") {
             order.sheetSynced = true;
-            showToast(`📊 Đơn #${order.code} đã được lưu vào Google Sheets`, "info");
         }
     } else {
         order.automationSync = "Chưa lưu được vào Google Sheets (sẽ tự thử lại khi tải lại trang)";
-        showToast(`⚠️ Chưa lưu được đơn #${order.code} vào Google Sheets. Kiểm tra kết nối mạng / tắt trình chặn quảng cáo rồi tải lại trang.`, "warning");
+        console.warn(`[Google Sheets] Lưu dự phòng đơn #${order.code} để đồng bộ sau.`);
     }
 
     // 2. Nếu có cấu hình Make.com Webhook URL
@@ -1229,7 +1224,7 @@ async function triggerSalesAutomationWebhook(order, actionType = "create_order")
     setTimeout(() => {
         const step3 = document.getElementById("auto-step-3");
         if (step3) {
-            step3.innerHTML = `✅ [Bước 3] Đã ghi nhận đơn #${order.code} vào hệ thống Google Sheets`;
+            step3.innerHTML = `✅ [Bước 3] Đã ghi nhận thông tin đơn hàng #${order.code} thành công`;
         }
     }, 900);
 }
@@ -1242,7 +1237,7 @@ function renderOrdersTable() {
     if (AppState.orders.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="8" class="text-center py-5 text-muted">
+                <td colspan="7" class="text-center py-5 text-muted">
                     <i class="fa-solid fa-box-open fs-1 mb-2 d-block opacity-50" style="color:var(--primary);"></i>
                     Bạn chưa có đơn đặt sách nào.<br>
                     <small>Hãy chọn những cuốn sách yêu thích và tiến hành đặt hàng để theo dõi đơn tại đây nhé!</small>
@@ -1266,12 +1261,6 @@ function renderOrdersTable() {
                 <span class="badge rounded-pill ${o.paymentStatus.includes("ĐÃ THANH TOÁN") ? "bg-success" : "bg-warning text-dark"}">
                     ${o.paymentStatus}
                 </span>
-            </td>
-            <td>
-                ${o.sheetSynced ? 
-                    `<span class="badge bg-success rounded-pill px-2 py-1"><i class="fa-solid fa-check me-1"></i>Đã lên Sheet</span>` : 
-                    `<button class="btn btn-sm btn-outline-danger rounded-pill py-0 px-2 fw-bold" onclick="manuallySyncOrderToSheet('${o.code}')" title="Bấm để đồng bộ đơn này lên Google Sheet"><i class="fa-solid fa-cloud-arrow-up me-1"></i>Đẩy lên Sheet</button>`
-                }
             </td>
             <td>
                 <button class="btn btn-sm btn-outline-primary rounded-pill" onclick="reopenOrderQR('${o.code}')">
