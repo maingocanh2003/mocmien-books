@@ -27,7 +27,10 @@ const SHOP_DEFAULT_CONFIG = {
     accountNo: "0869571734",
     accountName: "TIEM SACH MOC MIEN",
     qrTemplate: "compact2",
-    // Cấu hình tự động hóa miễn phí (Make.com / Google Form / Google Sheets)
+    // Cấu hình tự động đổ dữ liệu đơn hàng về Google Sheets (Miễn phí 100% qua Apps Script)
+    // Dán URL Web App (https://script.google.com/macros/s/.../exec) vào googleSheetWebAppUrl bên dưới:
+    googleSheetWebAppUrl: "https://script.google.com/macros/s/AKfycbwwnmNJvhW77HaXTrzTjiOmWjtzbJNPxrVJkiuMXppd96TgJ-tGpSGB5HsC39ESOsJs/exec",
+    // Tùy chọn mở rộng (Make.com Webhook / Google Form)
     makeWebhookUrl: "",
     googleFormActionUrl: "",
     googleFormEntryOrderId: "entry.111111",
