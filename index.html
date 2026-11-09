@@ -107,7 +107,7 @@
                         </button>
 
                         <!-- Tài khoản -->
-                        <button class="btn-action-header" data-bs-toggle="modal" data-bs-target="#loginModal"
+                        <button class="btn-action-header" onclick="openUserModal()" id="btn-header-user"
                             title="Đăng nhập thành viên">
                             <i class="fa-solid fa-user"></i>
                         </button>
@@ -979,36 +979,37 @@
     <div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-md modal-dialog-centered">
             <div class="modal-content rounded-4 border-0">
-                <div class="modal-body p-4 text-center">
-                    <h4 class="fw-bold text-uppercase mb-3" style="color:var(--primary);">Đăng Nhập Thành Viên</h4>
-                    <div class="row g-2 mb-3">
-                        <div class="col-6">
-                            <button class="btn btn-outline-danger w-100 rounded-pill small fw-bold"
-                                onclick="showToast('Đã kết nối đăng nhập Google thành công!'); bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();">
-                                <i class="fa-brands fa-google me-1"></i> Google
-                            </button>
+                <div id="login-modal-body-wrapper">
+                    <div class="modal-body p-4 text-center">
+                        <h4 class="fw-bold text-uppercase mb-3" style="color:var(--primary);">Đăng Nhập Thành Viên</h4>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <button type="button" class="btn btn-outline-danger w-100 rounded-pill small fw-bold"
+                                    onclick="loginWithOAuth('Google')">
+                                    <i class="fa-brands fa-google me-1"></i> Google
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button type="button" class="btn btn-outline-primary w-100 rounded-pill small fw-bold"
+                                    onclick="loginWithOAuth('Facebook')">
+                                    <i class="fa-brands fa-facebook me-1"></i> Facebook
+                                </button>
+                            </div>
                         </div>
-                        <div class="col-6">
-                            <button class="btn btn-outline-primary w-100 rounded-pill small fw-bold"
-                                onclick="showToast('Đã kết nối đăng nhập Facebook thành công!'); bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();">
-                                <i class="fa-brands fa-facebook me-1"></i> Facebook
-                            </button>
-                        </div>
+                        <div class="small text-muted mb-3">— Hoặc tài khoản Mộc Miên —</div>
+                        <form onsubmit="handleLoginFormSubmit(event)">
+                            <div class="mb-3">
+                                <input type="text" id="login-account-input" class="form-control rounded-pill px-3"
+                                    placeholder="Số điện thoại hoặc Email" required>
+                            </div>
+                            <div class="mb-3">
+                                <input type="password" id="login-password-input" class="form-control rounded-pill px-3" placeholder="Mật khẩu"
+                                    required>
+                            </div>
+                            <button type="submit" class="btn-cute-primary w-100 justify-content-center">Đăng Nhập
+                                Ngay</button>
+                        </form>
                     </div>
-                    <div class="small text-muted mb-3">— Hoặc tài khoản Mộc Miên —</div>
-                    <form
-                        onsubmit="event.preventDefault(); showToast('Chào mừng bạn quay trở lại Mộc Miên Books!'); bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();">
-                        <div class="mb-3">
-                            <input type="text" class="form-control rounded-pill px-3"
-                                placeholder="Số điện thoại hoặc Email" required>
-                        </div>
-                        <div class="mb-3">
-                            <input type="password" class="form-control rounded-pill px-3" placeholder="Mật khẩu"
-                                required>
-                        </div>
-                        <button type="submit" class="btn-cute-primary w-100 justify-content-center">Đăng Nhập
-                            Ngay</button>
-                    </form>
                 </div>
             </div>
         </div>
@@ -1016,8 +1017,8 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/js/data.js?v=20261108-5"></script>
-    <script src="assets/js/app.js?v=20261108-5"></script>
+    <script src="assets/js/data.js?v=20261109-2"></script>
+    <script src="assets/js/app.js?v=20261109-2"></script>
 </body>
 
 </html>

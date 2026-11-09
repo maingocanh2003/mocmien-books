@@ -17,7 +17,9 @@ const AppState = {
         priceRange: "all"
     },
     activeOrderForQR: null,
-    qrCountdownTimer: null
+    qrCountdownTimer: null,
+    currentUser: null,
+    pendingAction: null
 };
 
 // Khởi tạo dữ liệu từ LocalStorage
@@ -41,6 +43,15 @@ function initStorage() {
 
         const savedWish = localStorage.getItem("mocmien_wishlist");
         if (savedWish) AppState.wishlist = JSON.parse(savedWish);
+
+        const savedUser = localStorage.getItem("mocmien_user");
+        if (savedUser) {
+            try {
+                AppState.currentUser = JSON.parse(savedUser);
+            } catch (err) {
+                AppState.currentUser = null;
+            }
+        }
 
         // Xóa dữ liệu mẫu cũ (nếu có) và chỉ đọc các đơn hàng do chính người dùng đặt
         localStorage.removeItem("mocmien_orders");
@@ -350,6 +361,18 @@ function resetCatalogueFilter() {
 // GIỎ HÀNG, YÊU THÍCH & SO SÁNH
 // =========================================================================
 function addToCart(productId, qty = 1, showToastNotification = true) {
+    if (!AppState.currentUser) {
+        AppState.pendingAction = {
+            type: "addToCart",
+            productId,
+            qty,
+            showToastNotification
+        };
+        showToast("🔐 Vui lòng đăng nhập tài khoản để thêm sách vào giỏ hàng!", "info");
+        openUserModal();
+        return;
+    }
+
     const product = PRODUCTS.find(p => p.id === Number(productId));
     if (!product) return;
 
@@ -447,6 +470,16 @@ function renderSidebarCart() {
 
 // Mua ngay 1 chạm -> Mở thẳng Checkout VietQR (không hiển thị toast đã thêm vào giỏ)
 function buyNowVietQR(productId, qty = 1) {
+    if (!AppState.currentUser) {
+        AppState.pendingAction = {
+            type: "buyNow",
+            productId,
+            qty
+        };
+        showToast("🔐 Vui lòng đăng nhập tài khoản để tiến hành đặt mua sách!", "info");
+        openUserModal();
+        return;
+    }
     addToCart(productId, qty, false);
     openCheckoutModal();
 }
@@ -689,11 +722,25 @@ function applyCouponCode() {
 
 function openCheckoutModal() {
     toggleSidebarCart(false);
+    if (!AppState.currentUser) {
+        AppState.pendingAction = { type: "checkout" };
+        showToast("🔐 Vui lòng đăng nhập tài khoản để tiến hành đặt hàng!", "info");
+        openUserModal();
+        return;
+    }
     if (AppState.cart.length === 0) {
         showToast("Giỏ hàng của bạn đang trống, hãy chọn ít nhất 1 cuốn sách nhé!", "warning");
         return;
     }
     renderCheckoutSummary();
+    if (AppState.currentUser) {
+        const nameInput = document.getElementById("ck-fullname");
+        const phoneInput = document.getElementById("ck-phone");
+        const emailInput = document.getElementById("ck-email");
+        if (nameInput && !nameInput.value && AppState.currentUser.name) nameInput.value = AppState.currentUser.name;
+        if (phoneInput && !phoneInput.value && AppState.currentUser.phone) phoneInput.value = AppState.currentUser.phone;
+        if (emailInput && !emailInput.value && AppState.currentUser.email) emailInput.value = AppState.currentUser.email;
+    }
     const modalEl = document.getElementById("checkoutModal");
     const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     modal.show();
@@ -1455,6 +1502,196 @@ async function submitContactForm(event) {
     event.target.reset();
 }
 
+// =========================================================================
+// QUẢN LÝ ĐĂNG NHẬP / TÀI KHOẢN THÀNH VIÊN
+// =========================================================================
+
+function openUserModal() {
+    renderLoginModalContent();
+    const modalEl = document.getElementById("loginModal");
+    if (modalEl) {
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    }
+}
+
+function renderLoginModalContent() {
+    const wrapper = document.getElementById("login-modal-body-wrapper");
+    if (!wrapper) return;
+
+    if (AppState.currentUser) {
+        wrapper.innerHTML = `
+            <div class="modal-body p-4 text-center">
+                <div class="mb-3">
+                    <span class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width:68px;height:68px;background:var(--primary-soft);color:var(--primary);font-size:28px;">
+                        <i class="fa-solid fa-user-check"></i>
+                    </span>
+                </div>
+                <h4 class="fw-bold mb-1" style="color:var(--primary);">Tài Khoản Thành Viên</h4>
+                <p class="text-muted small mb-3">Chào mừng bạn quay trở lại Tiệm Sách Mộc Miên</p>
+                <div class="p-3 rounded-4 mb-3 text-start bg-light border small">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">Họ tên:</span>
+                        <strong class="text-dark">${AppState.currentUser.name}</strong>
+                    </div>
+                    ${AppState.currentUser.account ? `
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">Tài khoản:</span>
+                        <strong class="text-dark">${AppState.currentUser.account}</strong>
+                    </div>` : ""}
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Trạng thái:</span>
+                        <span class="badge bg-success rounded-pill px-2">Đã đăng nhập</span>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-danger w-50 rounded-pill fw-bold" onclick="logoutUser()">
+                        <i class="fa-solid fa-arrow-right-from-bracket me-1"></i>Đăng Xuất
+                    </button>
+                    <button type="button" class="btn-cute-primary w-50 justify-content-center" data-bs-dismiss="modal">
+                        <i class="fa-solid fa-bag-shopping me-1"></i>Tiếp Tục
+                    </button>
+                </div>
+            </div>
+        `;
+    } else {
+        wrapper.innerHTML = `
+            <div class="modal-body p-4 text-center">
+                <h4 class="fw-bold text-uppercase mb-3" style="color:var(--primary);">Đăng Nhập Thành Viên</h4>
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <button type="button" class="btn btn-outline-danger w-100 rounded-pill small fw-bold"
+                            onclick="loginWithOAuth('Google')">
+                            <i class="fa-brands fa-google me-1"></i> Google
+                        </button>
+                    </div>
+                    <div class="col-6">
+                        <button type="button" class="btn btn-outline-primary w-100 rounded-pill small fw-bold"
+                            onclick="loginWithOAuth('Facebook')">
+                            <i class="fa-brands fa-facebook me-1"></i> Facebook
+                        </button>
+                    </div>
+                </div>
+                <div class="small text-muted mb-3">— Hoặc tài khoản Mộc Miên —</div>
+                <form onsubmit="handleLoginFormSubmit(event)">
+                    <div class="mb-3">
+                        <input type="text" id="login-account-input" class="form-control rounded-pill px-3"
+                            placeholder="Số điện thoại hoặc Email" required>
+                    </div>
+                    <div class="mb-3">
+                        <input type="password" id="login-password-input" class="form-control rounded-pill px-3" placeholder="Mật khẩu"
+                            required>
+                    </div>
+                    <button type="submit" class="btn-cute-primary w-100 justify-content-center">Đăng Nhập Ngay</button>
+                </form>
+            </div>
+        `;
+    }
+}
+
+function handleLoginFormSubmit(event) {
+    if (event) event.preventDefault();
+    const accountInput = document.getElementById("login-account-input")?.value.trim() || "";
+    const passInput = document.getElementById("login-password-input")?.value.trim() || "";
+    if (!accountInput) {
+        showToast("Vui lòng nhập Số điện thoại hoặc Email", "warning");
+        return;
+    }
+    if (!passInput) {
+        showToast("Vui lòng nhập Mật khẩu", "warning");
+        return;
+    }
+
+    const isEmail = accountInput.includes("@");
+    const isPhone = /^0\d{9,10}$/.test(accountInput.replace(/\s+/g, ""));
+    const displayName = isEmail ? accountInput.split("@")[0] : (isPhone ? `Khách hàng ${accountInput.slice(-4)}` : accountInput);
+
+    const user = {
+        name: displayName,
+        account: accountInput,
+        email: isEmail ? accountInput : "",
+        phone: isPhone ? accountInput : "",
+        provider: "Mộc Miên"
+    };
+
+    completeLogin(user);
+}
+
+function loginWithOAuth(provider) {
+    const user = provider === "Google" ? {
+        name: "Ngọc Anh (Google)",
+        email: "ngocanh.google@gmail.com",
+        phone: "0355232713",
+        account: "ngocanh.google@gmail.com",
+        provider: "Google"
+    } : {
+        name: "Mai Anh (Facebook)",
+        email: "maianh.fb@facebook.com",
+        phone: "0355232713",
+        account: "maianh.fb@facebook.com",
+        provider: "Facebook"
+    };
+
+    completeLogin(user);
+}
+
+function completeLogin(user) {
+    AppState.currentUser = user;
+    try {
+        localStorage.setItem("mocmien_user", JSON.stringify(user));
+    } catch (e) {}
+
+    const loginModalEl = document.getElementById("loginModal");
+    if (loginModalEl) {
+        const instance = bootstrap.Modal.getInstance(loginModalEl);
+        if (instance) instance.hide();
+    }
+
+    showToast(`🎉 Chào mừng <strong>${user.name}</strong> đã đăng nhập thành công!`);
+    updateAuthUI();
+
+    // Tự động tiếp tục hành động đang chờ (Mua ngay hoặc Thêm vào giỏ)
+    if (AppState.pendingAction) {
+        const action = AppState.pendingAction;
+        AppState.pendingAction = null;
+        setTimeout(() => {
+            if (action.type === "addToCart") {
+                addToCart(action.productId, action.qty, action.showToastNotification);
+            } else if (action.type === "buyNow") {
+                buyNowVietQR(action.productId, action.qty);
+            } else if (action.type === "checkout") {
+                openCheckoutModal();
+            }
+        }, 350);
+    }
+}
+
+function logoutUser() {
+    AppState.currentUser = null;
+    try {
+        localStorage.removeItem("mocmien_user");
+    } catch (e) {}
+    showToast("Đã đăng xuất tài khoản thành công!", "info");
+    updateAuthUI();
+    renderLoginModalContent();
+}
+
+function updateAuthUI() {
+    const btnUser = document.getElementById("btn-header-user");
+    if (btnUser) {
+        if (AppState.currentUser) {
+            btnUser.title = `Tài khoản: ${AppState.currentUser.name} (Bấm để quản lý / đăng xuất)`;
+            btnUser.style.color = "var(--primary)";
+            btnUser.style.borderColor = "var(--primary)";
+            btnUser.style.background = "var(--primary-soft)";
+        } else {
+            btnUser.title = "Đăng nhập thành viên";
+            btnUser.style.color = "";
+            btnUser.style.borderColor = "";
+            btnUser.style.background = "";
+        }
+    }
+}
+
 // Khởi chạy khi DOM sẵn sàng
 document.addEventListener("DOMContentLoaded", () => {
     initStorage();
@@ -1462,6 +1699,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     renderAllSections();
     updateShopBrandingUI();
+    updateAuthUI();
     initFlashSaleTimer();
     syncPendingOrdersToGoogleSheet();
 
