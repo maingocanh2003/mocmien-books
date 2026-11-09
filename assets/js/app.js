@@ -32,6 +32,7 @@ function initStorage() {
                 ...SHOP_DEFAULT_CONFIG,
                 ...parsed,
                 googleSheetWebAppUrl: SHOP_DEFAULT_CONFIG.googleSheetWebAppUrl || parsed.googleSheetWebAppUrl || "",
+                googleClientId: SHOP_DEFAULT_CONFIG.googleClientId || parsed.googleClientId || "",
                 makeWebhookUrl: SHOP_DEFAULT_CONFIG.makeWebhookUrl || parsed.makeWebhookUrl || "",
                 googleFormActionUrl: SHOP_DEFAULT_CONFIG.googleFormActionUrl || parsed.googleFormActionUrl || ""
             };
@@ -1616,19 +1617,139 @@ function handleLoginFormSubmit(event) {
     completeLogin(user);
 }
 
+function initGoogleIdentityServices() {
+    const clientId = AppState.config.googleClientId || SHOP_DEFAULT_CONFIG.googleClientId;
+    if (clientId && window.google && window.google.accounts && window.google.accounts.id) {
+        try {
+            google.accounts.id.initialize({
+                client_id: clientId,
+                callback: handleGoogleCredentialResponse,
+                auto_select: false
+            });
+        } catch (e) {
+            console.warn("Lỗi khởi tạo Google GIS:", e);
+        }
+    }
+}
+
+function handleGoogleCredentialResponse(response) {
+    if (response && response.credential) {
+        try {
+            const payload = parseJwt(response.credential);
+            const user = {
+                name: payload.name || "Khách hàng Google",
+                email: payload.email || "",
+                phone: "",
+                avatar: payload.picture || "",
+                account: payload.email || "",
+                provider: "Google",
+                googleId: payload.sub || ""
+            };
+            completeLogin(user);
+        } catch (e) {
+            console.error("Lỗi giải mã token Google:", e);
+            showToast("Không thể giải mã dữ liệu tài khoản Google", "warning");
+        }
+    }
+}
+
+function parseJwt(token) {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
+}
+
 function loginWithOAuth(provider) {
-    const user = provider === "Google" ? {
-        name: "Ngọc Anh (Google)",
-        email: "ngocanh.google@gmail.com",
-        phone: "0355232713",
-        account: "ngocanh.google@gmail.com",
-        provider: "Google"
-    } : {
-        name: "Mai Anh (Facebook)",
-        email: "maianh.fb@facebook.com",
-        phone: "0355232713",
-        account: "maianh.fb@facebook.com",
-        provider: "Facebook"
+    if (provider === "Google") {
+        const clientId = AppState.config.googleClientId || SHOP_DEFAULT_CONFIG.googleClientId;
+        // Nếu đã cấu hình Google Client ID và Google SDK sẵn sàng
+        if (clientId && window.google && window.google.accounts && window.google.accounts.id) {
+            try {
+                google.accounts.id.prompt((notification) => {
+                    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                        renderOAuthPromptForm("Google");
+                    }
+                });
+                return;
+            } catch (err) {
+                console.warn("Google Prompt failed, fallback to prompt form:", err);
+            }
+        }
+        // Mở form nhập tài khoản Google thực của khách
+        renderOAuthPromptForm("Google");
+    } else {
+        renderOAuthPromptForm("Facebook");
+    }
+}
+
+function renderOAuthPromptForm(provider) {
+    const wrapper = document.getElementById("login-modal-body-wrapper");
+    if (!wrapper) return;
+
+    const isGoogle = provider === "Google";
+    const brandColor = isGoogle ? "#dc2626" : "#1877f2";
+    const brandBg = isGoogle ? "#fef2f2" : "#eff6ff";
+    const brandBorder = isGoogle ? "#fecaca" : "#bfdbfe";
+    const brandIcon = isGoogle ? "fa-brands fa-google" : "fa-brands fa-facebook";
+    const btnClass = isGoogle ? "btn-danger" : "btn-primary";
+
+    wrapper.innerHTML = `
+        <div class="modal-body p-4 text-center">
+            <div class="mb-3">
+                <span class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width:62px;height:62px;background:${brandBg};color:${brandColor};font-size:28px;border:2px solid ${brandBorder};">
+                    <i class="${brandIcon}"></i>
+                </span>
+            </div>
+            <h4 class="fw-bold mb-1" style="color:var(--primary);">Đăng Nhập Bằng ${provider}</h4>
+            <p class="text-muted small mb-3">Nhập thông tin tài khoản ${provider} của bạn để liên kết và tự động điền đơn sách</p>
+            
+            <form onsubmit="handleOAuthFormSubmit(event, '${provider}')">
+                <div class="mb-3 text-start">
+                    <label class="small fw-bold text-secondary mb-1">Email / Tài khoản ${provider} của bạn *</label>
+                    <input type="text" id="oauth-account" class="form-control rounded-pill px-3" placeholder="${isGoogle ? 'Ví dụ: ban@gmail.com' : 'Ví dụ: email hoặc SĐT Facebook'}" required>
+                </div>
+                <div class="mb-3 text-start">
+                    <label class="small fw-bold text-secondary mb-1">Họ và Tên của bạn *</label>
+                    <input type="text" id="oauth-name" class="form-control rounded-pill px-3" placeholder="Nhập họ tên thật nhận sách" required>
+                </div>
+                <div class="mb-3 text-start">
+                    <label class="small fw-bold text-secondary mb-1">Số điện thoại liên hệ nhận hàng *</label>
+                    <input type="tel" id="oauth-phone" class="form-control rounded-pill px-3" placeholder="Ví dụ: 0355232713" required pattern="[0-9]{10,11}">
+                </div>
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn ${btnClass} rounded-pill fw-bold py-2 text-white">
+                        <i class="${brandIcon} me-1"></i> Xác Nhận Đăng Nhập Với Tài Khoản Này
+                    </button>
+                    <button type="button" class="btn btn-sm btn-link text-muted text-decoration-none" onclick="renderLoginModalContent()">
+                        <i class="fa-solid fa-arrow-left me-1"></i> Quay lại
+                    </button>
+                </div>
+            </form>
+        </div>
+    `;
+}
+
+function handleOAuthFormSubmit(event, provider) {
+    if (event) event.preventDefault();
+    const account = document.getElementById("oauth-account")?.value.trim() || "";
+    const name = document.getElementById("oauth-name")?.value.trim() || "";
+    const phone = document.getElementById("oauth-phone")?.value.trim() || "";
+
+    if (!account || !name || !phone) {
+        showToast("Vui lòng điền đầy đủ Email/Tài khoản, Họ tên và Số điện thoại!", "warning");
+        return;
+    }
+
+    const isEmail = account.includes("@");
+    const user = {
+        name: name,
+        email: isEmail ? account : "",
+        phone: phone,
+        account: account,
+        provider: provider
     };
 
     completeLogin(user);
@@ -1700,6 +1821,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderAllSections();
     updateShopBrandingUI();
     updateAuthUI();
+    initGoogleIdentityServices();
     initFlashSaleTimer();
     syncPendingOrdersToGoogleSheet();
 

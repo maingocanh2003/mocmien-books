@@ -30,6 +30,9 @@ const SHOP_DEFAULT_CONFIG = {
     // Cấu hình tự động đổ dữ liệu đơn hàng về Google Sheets (Miễn phí 100% qua Apps Script)
     // Dán URL Web App (https://script.google.com/macros/s/.../exec) vào googleSheetWebAppUrl bên dưới:
     googleSheetWebAppUrl: "https://script.google.com/macros/s/AKfycbwwnmNJvhW77HaXTrzTjiOmWjtzbJNPxrVJkiuMXppd96TgJ-tGpSGB5HsC39ESOsJs/exec",
+    // Cấu hình Google OAuth Client ID (Tạo miễn phí tại https://console.cloud.google.com/apis/credentials)
+    // Dán mã Client ID dạng xxxxxxxxxxxx.apps.googleusercontent.com vào đây nếu muốn bật Google One-Tap/Popup tự động
+    googleClientId: "",
     // Tùy chọn mở rộng (Make.com Webhook / Google Form)
     makeWebhookUrl: "",
     googleFormActionUrl: "",
