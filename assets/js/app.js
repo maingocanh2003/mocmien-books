@@ -1665,63 +1665,131 @@ function parseJwt(token) {
 function loginWithOAuth(provider) {
     if (provider === "Google") {
         const clientId = AppState.config.googleClientId || SHOP_DEFAULT_CONFIG.googleClientId;
-        // Nếu đã cấu hình Google Client ID và Google SDK sẵn sàng
-        if (clientId && window.google && window.google.accounts && window.google.accounts.id) {
+        
+        // 1. Nếu đã có Google OAuth Client ID và SDK Google GIS sẵn sàng -> Mở popup Google chính thức
+        if (clientId && window.google && window.google.accounts && window.google.accounts.oauth2) {
             try {
-                google.accounts.id.prompt((notification) => {
-                    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-                        renderOAuthPromptForm("Google");
+                showToast("Đang kết nối tới Google...", "info");
+                const tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: clientId,
+                    scope: 'email profile openid',
+                    callback: async (tokenResponse) => {
+                        if (tokenResponse && tokenResponse.access_token) {
+                            try {
+                                const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                                    headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
+                                });
+                                const profile = await res.json();
+                                if (profile && profile.email) {
+                                    const user = {
+                                        name: profile.name || profile.email.split("@")[0],
+                                        email: profile.email,
+                                        account: profile.email,
+                                        avatar: profile.picture || "",
+                                        provider: "Google"
+                                    };
+                                    completeLogin(user);
+                                }
+                            } catch (err) {
+                                console.error("Lỗi lấy thông tin Google User:", err);
+                                showToast("Không thể tải thông tin từ Google", "warning");
+                            }
+                        }
                     }
                 });
+                tokenClient.requestAccessToken({ prompt: 'select_account' });
                 return;
             } catch (err) {
-                console.warn("Google Prompt failed, fallback to prompt form:", err);
+                console.warn("Lỗi mở Google OAuth:", err);
             }
         }
-        // Mở form nhập tài khoản Google thực của khách
-        renderOAuthPromptForm("Google");
+
+        // 2. Nếu chưa cấu hình Google Client ID -> Mở form liên kết Gmail (chỉ liên kết Gmail, không hỏi địa chỉ giao hàng)
+        renderGoogleQuickLinkForm();
     } else {
         renderOAuthPromptForm("Facebook");
     }
+}
+
+function renderGoogleQuickLinkForm() {
+    const wrapper = document.getElementById("login-modal-body-wrapper");
+    if (!wrapper) return;
+
+    wrapper.innerHTML = `
+        <div class="modal-body p-4 text-center">
+            <div class="mb-3">
+                <span class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width:62px;height:62px;background:#fef2f2;color:#dc2626;font-size:28px;border:2px solid #fecaca;">
+                    <i class="fa-brands fa-google"></i>
+                </span>
+            </div>
+            <h4 class="fw-bold mb-1" style="color:var(--primary);">Liên Kết Tài Khoản Gmail</h4>
+            <p class="text-muted small mb-3">Chỉ cần nhập địa chỉ Gmail của bạn để liên kết đăng nhập (không cần nhập địa chỉ giao hàng lúc này)</p>
+            
+            <form onsubmit="handleGoogleQuickLinkSubmit(event)">
+                <div class="mb-3 text-start">
+                    <label class="small fw-bold text-secondary mb-1">Địa chỉ Gmail của bạn *</label>
+                    <input type="email" id="google-quick-email" class="form-control rounded-pill px-3" placeholder="Ví dụ: ban@gmail.com" required autofocus>
+                </div>
+                <div class="d-grid gap-2 mt-3">
+                    <button type="submit" class="btn btn-danger rounded-pill fw-bold py-2 text-white">
+                        <i class="fa-brands fa-google me-1"></i> Liên Kết Gmail Này
+                    </button>
+                    <button type="button" class="btn btn-sm btn-link text-muted text-decoration-none" onclick="renderLoginModalContent()">
+                        <i class="fa-solid fa-arrow-left me-1"></i> Quay lại
+                    </button>
+                </div>
+            </form>
+            <div class="mt-3 p-2 bg-light rounded-3 text-muted" style="font-size:11px;">
+                <i class="fa-solid fa-shield-heart text-success me-1"></i> Địa chỉ giao hàng và số điện thoại chỉ cần nhập khi bạn chốt đơn thanh toán sách.
+            </div>
+        </div>
+    `;
+}
+
+function handleGoogleQuickLinkSubmit(event) {
+    if (event) event.preventDefault();
+    const email = document.getElementById("google-quick-email")?.value.trim() || "";
+    if (!email || !email.includes("@")) {
+        showToast("Vui lòng nhập đúng địa chỉ Gmail của bạn!", "warning");
+        return;
+    }
+
+    // Lấy tên hiển thị tự nhiên từ phần trước @ của email
+    const rawName = email.split("@")[0].replace(/[._-]/g, " ");
+    const displayName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+
+    const user = {
+        name: displayName,
+        email: email,
+        account: email,
+        provider: "Google"
+    };
+
+    completeLogin(user);
 }
 
 function renderOAuthPromptForm(provider) {
     const wrapper = document.getElementById("login-modal-body-wrapper");
     if (!wrapper) return;
 
-    const isGoogle = provider === "Google";
-    const brandColor = isGoogle ? "#dc2626" : "#1877f2";
-    const brandBg = isGoogle ? "#fef2f2" : "#eff6ff";
-    const brandBorder = isGoogle ? "#fecaca" : "#bfdbfe";
-    const brandIcon = isGoogle ? "fa-brands fa-google" : "fa-brands fa-facebook";
-    const btnClass = isGoogle ? "btn-danger" : "btn-primary";
-
     wrapper.innerHTML = `
         <div class="modal-body p-4 text-center">
             <div class="mb-3">
-                <span class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width:62px;height:62px;background:${brandBg};color:${brandColor};font-size:28px;border:2px solid ${brandBorder};">
-                    <i class="${brandIcon}"></i>
+                <span class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width:62px;height:62px;background:#eff6ff;color:#1877f2;font-size:28px;border:2px solid #bfdbfe;">
+                    <i class="fa-brands fa-facebook"></i>
                 </span>
             </div>
-            <h4 class="fw-bold mb-1" style="color:var(--primary);">Đăng Nhập Bằng ${provider}</h4>
-            <p class="text-muted small mb-3">Nhập thông tin tài khoản ${provider} của bạn để liên kết và tự động điền đơn sách</p>
+            <h4 class="fw-bold mb-1" style="color:var(--primary);">Liên Kết Tài Khoản Facebook</h4>
+            <p class="text-muted small mb-3">Nhập tên hoặc link Facebook của bạn để đăng nhập nhanh</p>
             
-            <form onsubmit="handleOAuthFormSubmit(event, '${provider}')">
+            <form onsubmit="handleFacebookQuickLinkSubmit(event)">
                 <div class="mb-3 text-start">
-                    <label class="small fw-bold text-secondary mb-1">Email / Tài khoản ${provider} của bạn *</label>
-                    <input type="text" id="oauth-account" class="form-control rounded-pill px-3" placeholder="${isGoogle ? 'Ví dụ: ban@gmail.com' : 'Ví dụ: email hoặc SĐT Facebook'}" required>
+                    <label class="small fw-bold text-secondary mb-1">Tên hiển thị hoặc Email/SĐT Facebook *</label>
+                    <input type="text" id="fb-quick-account" class="form-control rounded-pill px-3" placeholder="Ví dụ: Tên Facebook của bạn" required>
                 </div>
-                <div class="mb-3 text-start">
-                    <label class="small fw-bold text-secondary mb-1">Họ và Tên của bạn *</label>
-                    <input type="text" id="oauth-name" class="form-control rounded-pill px-3" placeholder="Nhập họ tên thật nhận sách" required>
-                </div>
-                <div class="mb-3 text-start">
-                    <label class="small fw-bold text-secondary mb-1">Số điện thoại liên hệ nhận hàng *</label>
-                    <input type="tel" id="oauth-phone" class="form-control rounded-pill px-3" placeholder="Ví dụ: 0355232713" required pattern="[0-9]{10,11}">
-                </div>
-                <div class="d-grid gap-2 mt-4">
-                    <button type="submit" class="btn ${btnClass} rounded-pill fw-bold py-2 text-white">
-                        <i class="${brandIcon} me-1"></i> Xác Nhận Đăng Nhập Với Tài Khoản Này
+                <div class="d-grid gap-2 mt-3">
+                    <button type="submit" class="btn btn-primary rounded-pill fw-bold py-2 text-white">
+                        <i class="fa-brands fa-facebook me-1"></i> Đăng Nhập Với Facebook
                     </button>
                     <button type="button" class="btn btn-sm btn-link text-muted text-decoration-none" onclick="renderLoginModalContent()">
                         <i class="fa-solid fa-arrow-left me-1"></i> Quay lại
@@ -1732,26 +1800,19 @@ function renderOAuthPromptForm(provider) {
     `;
 }
 
-function handleOAuthFormSubmit(event, provider) {
+function handleFacebookQuickLinkSubmit(event) {
     if (event) event.preventDefault();
-    const account = document.getElementById("oauth-account")?.value.trim() || "";
-    const name = document.getElementById("oauth-name")?.value.trim() || "";
-    const phone = document.getElementById("oauth-phone")?.value.trim() || "";
-
-    if (!account || !name || !phone) {
-        showToast("Vui lòng điền đầy đủ Email/Tài khoản, Họ tên và Số điện thoại!", "warning");
+    const account = document.getElementById("fb-quick-account")?.value.trim() || "";
+    if (!account) {
+        showToast("Vui lòng nhập tên tài khoản Facebook của bạn!", "warning");
         return;
     }
-
-    const isEmail = account.includes("@");
     const user = {
-        name: name,
-        email: isEmail ? account : "",
-        phone: phone,
+        name: account,
         account: account,
-        provider: provider
+        email: account.includes("@") ? account : "",
+        provider: "Facebook"
     };
-
     completeLogin(user);
 }
 
