@@ -32,7 +32,9 @@ const SHOP_DEFAULT_CONFIG = {
     googleSheetWebAppUrl: "https://script.google.com/macros/s/AKfycbwwnmNJvhW77HaXTrzTjiOmWjtzbJNPxrVJkiuMXppd96TgJ-tGpSGB5HsC39ESOsJs/exec",
     // Cấu hình Google OAuth Client ID (Tạo miễn phí tại https://console.cloud.google.com/apis/credentials)
     // Dán mã Client ID dạng xxxxxxxxxxxx.apps.googleusercontent.com vào đây nếu muốn bật Google One-Tap/Popup tự động
-    googleClientId: "",
+    googleClientId: "748763547608-bh20tk4e6uf4fu5m6ukiemtlj7rfckda.apps.googleusercontent.com",
+    // Cấu hình Facebook App ID (Tạo tại https://developers.facebook.com/apps)
+    facebookAppId: "",
     // Tùy chọn mở rộng (Make.com Webhook / Google Form)
     makeWebhookUrl: "",
     googleFormActionUrl: "",

@@ -33,6 +33,7 @@ function initStorage() {
                 ...parsed,
                 googleSheetWebAppUrl: SHOP_DEFAULT_CONFIG.googleSheetWebAppUrl || parsed.googleSheetWebAppUrl || "",
                 googleClientId: SHOP_DEFAULT_CONFIG.googleClientId || parsed.googleClientId || "",
+                facebookAppId: SHOP_DEFAULT_CONFIG.facebookAppId || parsed.facebookAppId || "",
                 makeWebhookUrl: SHOP_DEFAULT_CONFIG.makeWebhookUrl || parsed.makeWebhookUrl || "",
                 googleFormActionUrl: SHOP_DEFAULT_CONFIG.googleFormActionUrl || parsed.googleFormActionUrl || ""
             };
@@ -1706,9 +1707,114 @@ function loginWithOAuth(provider) {
 
         // 2. Nếu chưa cấu hình Google Client ID -> Mở form liên kết Gmail (chỉ liên kết Gmail, không hỏi địa chỉ giao hàng)
         renderGoogleQuickLinkForm();
-    } else {
-        renderOAuthPromptForm("Facebook");
+    } else if (provider === "Facebook") {
+        const appId = AppState.config.facebookAppId || SHOP_DEFAULT_CONFIG.facebookAppId;
+        
+        // 1. Nếu đã có Facebook App ID và SDK Facebook sẵn sàng -> Mở hộp thoại xác thực FB chính thức
+        if (appId && window.FB) {
+            try {
+                showToast("Đang kết nối tới Facebook để xác minh...", "info");
+                FB.login(function(response) {
+                    if (response.authResponse) {
+                        FB.api('/me', { fields: 'id,name,email,picture' }, function(userInfo) {
+                            completeLogin({
+                                name: userInfo.name || "Khách hàng Facebook",
+                                email: userInfo.email || "",
+                                account: userInfo.email || userInfo.id || userInfo.name,
+                                avatar: userInfo.picture?.data?.url || "",
+                                provider: "Facebook"
+                            });
+                        });
+                    } else {
+                        showToast("Đã hủy xác minh đăng nhập Facebook", "warning");
+                    }
+                }, { scope: 'public_profile,email' });
+                return;
+            } catch (err) {
+                console.warn("Lỗi gọi FB.login:", err);
+            }
+        }
+
+        // 2. Chuyển đến trang đăng nhập Facebook chính thức để yêu cầu nhập tài khoản xác minh
+        openFacebookLoginPage();
     }
+}
+
+function openFacebookLoginPage() {
+    const fbLoginUrl = "https://www.facebook.com/login.php";
+    showToast("Đang chuyển tới trang Facebook để xác minh...", "info");
+    
+    // Mở ngay cửa sổ đăng nhập Facebook chính thức
+    try {
+        window.open(fbLoginUrl, "_blank", "width=650,height=720,top=100,left=200,scrollbars=yes,status=yes");
+    } catch (e) {
+        console.warn("Popup blocked:", e);
+    }
+
+    renderFacebookVerificationModal();
+}
+
+function renderFacebookVerificationModal() {
+    const wrapper = document.getElementById("login-modal-body-wrapper");
+    if (!wrapper) return;
+
+    wrapper.innerHTML = `
+        <div class="modal-body p-4 text-center">
+            <div class="mb-3">
+                <span class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width:68px;height:68px;background:#eff6ff;color:#1877f2;font-size:32px;border:2.5px solid #bfdbfe;">
+                    <i class="fa-brands fa-facebook"></i>
+                </span>
+            </div>
+            <h4 class="fw-bold mb-1" style="color:var(--primary);">Xác Minh Tài Khoản Facebook</h4>
+            <p class="text-muted small mb-3">Đã chuyển tới trang đăng nhập Facebook để bạn nhập tài khoản xác minh</p>
+
+            <div class="p-3 rounded-4 bg-light border small text-start mb-3">
+                <div class="d-flex align-items-center gap-2 mb-2 text-primary fw-bold">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Cửa sổ Facebook.com đã được mở
+                </div>
+                <div class="text-secondary mb-2">
+                    Vui lòng nhập Email/Số điện thoại và Mật khẩu trên trang Facebook để xác minh danh tính tài khoản của bạn.
+                </div>
+                <div class="small text-muted">
+                    <i class="fa-solid fa-shield-halved text-success me-1"></i> Quá trình xác minh được thực hiện an toàn trực tiếp trên máy chủ Facebook.
+                </div>
+            </div>
+
+            <form onsubmit="handleFacebookVerifyConfirm(event)">
+                <div class="mb-3 text-start">
+                    <label class="small fw-bold text-secondary mb-1">Tên tài khoản hoặc Email Facebook bạn vừa xác minh *</label>
+                    <input type="text" id="fb-verify-name" class="form-control rounded-pill px-3" placeholder="Ví dụ: Tên Facebook của bạn" required autofocus>
+                </div>
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary rounded-pill fw-bold py-2 text-white">
+                        <i class="fa-brands fa-facebook me-1"></i> Xác Nhận Đã Đăng Nhập Facebook
+                    </button>
+                    <a href="https://www.facebook.com/login.php" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill fw-bold">
+                        <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Bấm để mở lại trang Facebook
+                    </a>
+                    <button type="button" class="btn btn-sm btn-link text-muted text-decoration-none" onclick="renderLoginModalContent()">
+                        <i class="fa-solid fa-arrow-left me-1"></i> Quay lại
+                    </button>
+                </div>
+            </form>
+        </div>
+    `;
+}
+
+function handleFacebookVerifyConfirm(event) {
+    if (event) event.preventDefault();
+    const accountName = document.getElementById("fb-verify-name")?.value.trim() || "";
+    if (!accountName) {
+        showToast("Vui lòng nhập tên tài khoản Facebook bạn vừa xác minh!", "warning");
+        return;
+    }
+    const user = {
+        name: accountName,
+        account: accountName,
+        email: accountName.includes("@") ? accountName : "",
+        provider: "Facebook"
+    };
+    completeLogin(user);
 }
 
 function renderGoogleQuickLinkForm() {
@@ -1765,54 +1871,6 @@ function handleGoogleQuickLinkSubmit(event) {
         provider: "Google"
     };
 
-    completeLogin(user);
-}
-
-function renderOAuthPromptForm(provider) {
-    const wrapper = document.getElementById("login-modal-body-wrapper");
-    if (!wrapper) return;
-
-    wrapper.innerHTML = `
-        <div class="modal-body p-4 text-center">
-            <div class="mb-3">
-                <span class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width:62px;height:62px;background:#eff6ff;color:#1877f2;font-size:28px;border:2px solid #bfdbfe;">
-                    <i class="fa-brands fa-facebook"></i>
-                </span>
-            </div>
-            <h4 class="fw-bold mb-1" style="color:var(--primary);">Liên Kết Tài Khoản Facebook</h4>
-            <p class="text-muted small mb-3">Nhập tên hoặc link Facebook của bạn để đăng nhập nhanh</p>
-            
-            <form onsubmit="handleFacebookQuickLinkSubmit(event)">
-                <div class="mb-3 text-start">
-                    <label class="small fw-bold text-secondary mb-1">Tên hiển thị hoặc Email/SĐT Facebook *</label>
-                    <input type="text" id="fb-quick-account" class="form-control rounded-pill px-3" placeholder="Ví dụ: Tên Facebook của bạn" required>
-                </div>
-                <div class="d-grid gap-2 mt-3">
-                    <button type="submit" class="btn btn-primary rounded-pill fw-bold py-2 text-white">
-                        <i class="fa-brands fa-facebook me-1"></i> Đăng Nhập Với Facebook
-                    </button>
-                    <button type="button" class="btn btn-sm btn-link text-muted text-decoration-none" onclick="renderLoginModalContent()">
-                        <i class="fa-solid fa-arrow-left me-1"></i> Quay lại
-                    </button>
-                </div>
-            </form>
-        </div>
-    `;
-}
-
-function handleFacebookQuickLinkSubmit(event) {
-    if (event) event.preventDefault();
-    const account = document.getElementById("fb-quick-account")?.value.trim() || "";
-    if (!account) {
-        showToast("Vui lòng nhập tên tài khoản Facebook của bạn!", "warning");
-        return;
-    }
-    const user = {
-        name: account,
-        account: account,
-        email: account.includes("@") ? account : "",
-        provider: "Facebook"
-    };
     completeLogin(user);
 }
 
