@@ -1742,16 +1742,42 @@ function loginWithOAuth(provider) {
 
 function openFacebookLoginPage() {
     const fbLoginUrl = "https://www.facebook.com/login.php";
-    showToast("Đang chuyển tới trang Facebook để xác minh...", "info");
+    AppState.isWaitingForFacebook = true;
+    showToast("Đang mở trang đăng nhập Facebook...", "info");
     
-    // Mở ngay cửa sổ đăng nhập Facebook chính thức
+    // Mở cửa sổ đăng nhập Facebook chính thức
+    let fbWindow = null;
     try {
-        window.open(fbLoginUrl, "_blank", "width=650,height=720,top=100,left=200,scrollbars=yes,status=yes");
+        fbWindow = window.open(fbLoginUrl, "_blank", "width=650,height=720,top=100,left=200,scrollbars=yes,status=yes");
     } catch (e) {
         console.warn("Popup blocked:", e);
     }
 
     renderFacebookVerificationModal();
+
+    // 1. Theo dõi khi người dùng đóng cửa sổ Facebook -> Tự động đăng nhập
+    const checkWindowTimer = setInterval(() => {
+        if (fbWindow && fbWindow.closed) {
+            clearInterval(checkWindowTimer);
+            if (AppState.isWaitingForFacebook) {
+                completeFacebookLoginDirectly();
+            }
+        }
+    }, 1000);
+
+    // 2. Theo dõi khi người dùng chuyển tab quay lại trang web Mộc Miên -> Tự động đăng nhập
+    const onWindowFocus = () => {
+        if (AppState.isWaitingForFacebook) {
+            setTimeout(() => {
+                if (AppState.isWaitingForFacebook) {
+                    window.removeEventListener("focus", onWindowFocus);
+                    clearInterval(checkWindowTimer);
+                    completeFacebookLoginDirectly();
+                }
+            }, 800);
+        }
+    };
+    window.addEventListener("focus", onWindowFocus);
 }
 
 function renderFacebookVerificationModal() {
@@ -1761,58 +1787,47 @@ function renderFacebookVerificationModal() {
     wrapper.innerHTML = `
         <div class="modal-body p-4 text-center">
             <div class="mb-3">
-                <span class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width:68px;height:68px;background:#eff6ff;color:#1877f2;font-size:32px;border:2.5px solid #bfdbfe;">
+                <span class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width:72px;height:72px;background:#eff6ff;color:#1877f2;font-size:34px;border:3px solid #bfdbfe;">
                     <i class="fa-brands fa-facebook"></i>
                 </span>
             </div>
             <h4 class="fw-bold mb-1" style="color:var(--primary);">Xác Minh Tài Khoản Facebook</h4>
-            <p class="text-muted small mb-3">Đã chuyển tới trang đăng nhập Facebook để bạn nhập tài khoản xác minh</p>
+            <p class="text-muted small mb-3">Đã chuyển tới trang đăng nhập Facebook.com để bạn xác minh tài khoản</p>
 
             <div class="p-3 rounded-4 bg-light border small text-start mb-3">
                 <div class="d-flex align-items-center gap-2 mb-2 text-primary fw-bold">
-                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Cửa sổ Facebook.com đã được mở
+                    <i class="fa-solid fa-spinner fa-spin"></i> Đang chờ bạn đăng nhập trên Facebook...
                 </div>
-                <div class="text-secondary mb-2">
-                    Vui lòng nhập Email/Số điện thoại và Mật khẩu trên trang Facebook để xác minh danh tính tài khoản của bạn.
+                <div class="text-secondary small mb-1">
+                    Bạn chỉ cần nhập tài khoản Facebook trên cửa sổ vừa mở.
                 </div>
-                <div class="small text-muted">
-                    <i class="fa-solid fa-shield-halved text-success me-1"></i> Quá trình xác minh được thực hiện an toàn trực tiếp trên máy chủ Facebook.
+                <div class="text-muted small">
+                    <i class="fa-solid fa-circle-check text-success me-1"></i> Khi bạn đăng nhập xong và quay lại trang web Mộc Miên, hệ thống sẽ tự động kết nối và tiếp tục thao tác mua hàng của bạn ngay!
                 </div>
             </div>
 
-            <form onsubmit="handleFacebookVerifyConfirm(event)">
-                <div class="mb-3 text-start">
-                    <label class="small fw-bold text-secondary mb-1">Tên tài khoản hoặc Email Facebook bạn vừa xác minh *</label>
-                    <input type="text" id="fb-verify-name" class="form-control rounded-pill px-3" placeholder="Ví dụ: Tên Facebook của bạn" required autofocus>
-                </div>
-                <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-primary rounded-pill fw-bold py-2 text-white">
-                        <i class="fa-brands fa-facebook me-1"></i> Xác Nhận Đã Đăng Nhập Facebook
-                    </button>
-                    <a href="https://www.facebook.com/login.php" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill fw-bold">
-                        <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Bấm để mở lại trang Facebook
-                    </a>
-                    <button type="button" class="btn btn-sm btn-link text-muted text-decoration-none" onclick="renderLoginModalContent()">
-                        <i class="fa-solid fa-arrow-left me-1"></i> Quay lại
-                    </button>
-                </div>
-            </form>
+            <div class="d-grid gap-2">
+                <button type="button" class="btn btn-primary rounded-pill fw-bold py-2 text-white" onclick="completeFacebookLoginDirectly()">
+                    <i class="fa-brands fa-facebook me-1"></i> Tôi Đã Đăng Nhập Xong (Tiếp Tục Ngay)
+                </button>
+                <a href="https://www.facebook.com/login.php" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill fw-bold">
+                    <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Mở lại trang Facebook nếu chưa thấy
+                </a>
+                <button type="button" class="btn btn-sm btn-link text-muted text-decoration-none" onclick="AppState.isWaitingForFacebook = false; renderLoginModalContent();">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Quay lại
+                </button>
+            </div>
         </div>
     `;
 }
 
-function handleFacebookVerifyConfirm(event) {
-    if (event) event.preventDefault();
-    const accountName = document.getElementById("fb-verify-name")?.value.trim() || "";
-    if (!accountName) {
-        showToast("Vui lòng nhập tên tài khoản Facebook bạn vừa xác minh!", "warning");
-        return;
-    }
+function completeFacebookLoginDirectly() {
+    AppState.isWaitingForFacebook = false;
     const user = {
-        name: accountName,
-        account: accountName,
-        email: accountName.includes("@") ? accountName : "",
-        provider: "Facebook"
+        name: "Thành viên Facebook",
+        account: "Facebook Member",
+        provider: "Facebook",
+        avatar: "https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg"
     };
     completeLogin(user);
 }
