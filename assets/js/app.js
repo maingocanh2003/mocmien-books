@@ -1,30 +1,82 @@
+/**
+ * =========================================================================
+ * ENGINE XỬ LÝ BÁN HÀNG TỰ ĐỘNG & THANH TOÁN VIETQR TRÊN DI ĐỘNG
+ * HỆ THỐNG THƯƠNG MẠI ĐIỆN TỬ NHÀ SÁCH MỘC MIÊN (MỘC MIÊN BOOKS)
+ * =========================================================================
+ *
+ * MỤC LỤC KIẾN TRÚC HỆ THỐNG (SYSTEM ARCHITECTURE):
+ * -------------------------------------------------------------------------
+ * MODULE 1: QUẢN LÝ TRẠNG THÁI TOÀN CỤC & LOCALSTORAGE
+ *   - AppState, initStorage(), saveCart(), saveWishlist(), saveOrders(), saveConfig()
+ *
+ * MODULE 2: TIỆN ÍCH ĐỊNH DẠNG & THÔNG BÁO GIAO DIỆN
+ *   - formatVND(), showToast(), updateBadges(), copyText(), startQRCountdown(), initFlashSaleTimer()
+ *
+ * MODULE 3: KHO SÁCH & BỘ LỌC TÌM KIẾM
+ *   - createProductCardHTML(), renderAllSections(), renderCatalogue(), filterByCategory(), resetCatalogueFilter()
+ *
+ * MODULE 4: GIỎ HÀNG, DANH SÁCH YÊU THÍCH & SO SÁNH SÁCH
+ *   - addToCart(), updateCartQty(), removeFromCart(), toggleSidebarCart(), renderSidebarCart(),
+ *     buyNowVietQR(), toggleWishlist(), openWishlistModal(), addToCompare(), renderCompareModal()
+ *
+ * MODULE 5: CHI TIẾT SẢN PHẨM & BÀI VIẾT CẨM NANG
+ *   - openProductDetail(), openBlogModal()
+ *
+ * MODULE 6: ĐẶT HÀNG, TÍNH TOÁN & THANH TOÁN VIETQR NAPAS 247
+ *   - calculateOrderTotals(), applyCouponCode(), openCheckoutModal(), renderCheckoutSummary(),
+ *     updateCheckoutLiveQRPreview(), toggleCheckoutPaymentMethod(), submitOrderAndGenerateVietQR(),
+ *     openCodOrderSuccessModal(), buildVietQRImageUrl(), openVietQRPaymentModal(), confirmVietQRPaymentSuccess()
+ *
+ * MODULE 7: TỰ ĐỘNG HÓA GOOGLE SHEETS & ĐỒNG BỘ DỮ LIỆU
+ *   - getGoogleSheetUrls(), sendPayloadToGoogleSheets(), triggerSalesAutomationWebhook(),
+ *     renderOrdersTable(), testGoogleSheetConnection(), manuallySyncOrderToSheet(),
+ *     syncAllPendingOrdersToSheet(), reopenOrderQR(), exportOrdersToCSV(),
+ *     openAutomationConfigModal(), updateShopBrandingUI(), syncPendingOrdersToGoogleSheet(), submitContactForm()
+ *
+ * MODULE 8: QUẢN LÝ TÀI KHOẢN, XÁC THỰC GOOGLE & FACEBOOK
+ *   - openUserModal(), renderLoginModalContent(), handleLoginFormSubmit(), initGoogleIdentityServices(),
+ *     handleGoogleCredentialResponse(), parseJwt(), loginWithOAuth(), openFacebookLoginPage(),
+ *     renderFacebookVerificationModal(), completeFacebookLoginDirectly(), renderGoogleQuickLinkForm(),
+ *     handleGoogleQuickLinkSubmit(), completeLogin(), logoutUser(), updateAuthUI()
+ *
+ * MODULE 9: KHỞI TẠO ỨNG DỤNG KHI TẢI TRANG (APPLICATION LIFECYCLE)
+ *   - DOMContentLoaded event listener
+ * =========================================================================
+ */
+
 // =========================================================================
-// ENGINE XỬ LÝ BÁN HÀNG TỰ ĐỘNG & THANH TOÁN VIETQR TRÊN DI ĐỘNG
-// Mộc Miên Books - Hệ thống Thương mại Điện tử K65
+// MODULE 1: QUẢN LÝ TRẠNG THÁI TOÀN CỤC & LOCALSTORAGE
 // =========================================================================
 
+/**
+ * Đối tượng trạng thái toàn cục của ứng dụng (Single Source of Truth)
+ */
 const AppState = {
-    config: { ...SHOP_DEFAULT_CONFIG },
-    cart: [],
-    wishlist: [],
-    compare: [],
-    orders: [],
-    appliedCoupon: null,
-    currentFilter: {
+    config: { ...SHOP_DEFAULT_CONFIG },     // Cấu hình cửa hàng (tên, VietQR, Google Sheets, OAuth)
+    cart: [],                               // Danh sách sản phẩm trong giỏ hàng [{id, code, title, price, image, qty...}]
+    wishlist: [],                           // Danh sách ID sách yêu thích
+    compare: [],                            // Danh sách ID sách đưa vào so sánh (tối đa 3 cuốn)
+    orders: [],                             // Danh sách đơn hàng do khách đã đặt
+    appliedCoupon: null,                    // Mã giảm giá đang áp dụng
+    currentFilter: {                        // Bộ lọc danh mục sách
         category: "all",
         keyword: "",
         sort: "default",
         priceRange: "all"
     },
-    activeOrderForQR: null,
-    qrCountdownTimer: null,
-    currentUser: null,
-    pendingAction: null
+    activeOrderForQR: null,                 // Đơn hàng đang hiển thị mã QR thanh toán
+    qrCountdownTimer: null,                 // Bộ đếm thời gian hiệu lực mã QR
+    currentUser: null,                      // Thông tin tài khoản người dùng đã đăng nhập
+    pendingAction: null,                    // Hành động đang chờ thực hiện sau khi đăng nhập (addToCart, buyNow, checkout)
+    isWaitingForFacebook: false             // Cờ kiểm soát trạng thái chờ khách xác minh trên Facebook
 };
 
-// Khởi tạo dữ liệu từ LocalStorage
+/**
+ * Khởi tạo trạng thái và nạp dữ liệu đã lưu từ LocalStorage của trình duyệt
+ */
 function initStorage() {
     try {
+        // 1. Khôi phục cấu hình cửa hàng
         const savedConfig = localStorage.getItem("mocmien_config");
         if (savedConfig) {
             const parsed = JSON.parse(savedConfig);
@@ -40,12 +92,16 @@ function initStorage() {
         } else {
             AppState.config = { ...SHOP_DEFAULT_CONFIG };
         }
+
+        // 2. Khôi phục giỏ hàng
         const savedCart = localStorage.getItem("mocmien_cart");
         if (savedCart) AppState.cart = JSON.parse(savedCart);
 
+        // 3. Khôi phục danh sách yêu thích
         const savedWish = localStorage.getItem("mocmien_wishlist");
         if (savedWish) AppState.wishlist = JSON.parse(savedWish);
 
+        // 4. Khôi phục phiên đăng nhập người dùng
         const savedUser = localStorage.getItem("mocmien_user");
         if (savedUser) {
             try {
@@ -55,8 +111,8 @@ function initStorage() {
             }
         }
 
-        // Xóa dữ liệu mẫu cũ (nếu có) và chỉ đọc các đơn hàng do chính người dùng đặt
-        localStorage.removeItem("mocmien_orders");
+        // 5. Khôi phục lịch sử đơn hàng của chính khách hàng
+        localStorage.removeItem("mocmien_orders"); // Dọn dẹp key mẫu cũ nếu có
         const savedMyOrders = localStorage.getItem("mocmien_my_orders");
         if (savedMyOrders) {
             AppState.orders = JSON.parse(savedMyOrders);
@@ -68,39 +124,65 @@ function initStorage() {
     }
 }
 
+/**
+ * Lưu giỏ hàng vào LocalStorage và làm mới huy hiệu số lượng
+ */
 function saveCart() {
     localStorage.setItem("mocmien_cart", JSON.stringify(AppState.cart));
     updateBadges();
 }
 
+/**
+ * Lưu danh sách yêu thích vào LocalStorage và làm mới huy hiệu
+ */
 function saveWishlist() {
     localStorage.setItem("mocmien_wishlist", JSON.stringify(AppState.wishlist));
     updateBadges();
 }
 
+/**
+ * Lưu danh sách đơn hàng của khách vào LocalStorage
+ */
 function saveOrders() {
     localStorage.setItem("mocmien_my_orders", JSON.stringify(AppState.orders));
     updateBadges();
 }
 
+/**
+ * Lưu cấu hình cửa hàng vào LocalStorage
+ */
 function saveConfig() {
     localStorage.setItem("mocmien_config", JSON.stringify(AppState.config));
 }
 
-// Định dạng tiền tệ VND
+// =========================================================================
+// MODULE 2: TIỆN ÍCH ĐỊNH DẠNG & THÔNG BÁO GIAO DIỆN
+// =========================================================================
+
+/**
+ * Định dạng số tiền sang chuẩn hiển thị tiền tệ Việt Nam (VND)
+ * @param {number|string} amount Số tiền cần định dạng
+ * @returns {string} Chuỗi hiển thị định dạng VND (VD: 86.000 VND)
+ */
 function formatVND(amount) {
     return Number(amount || 0).toLocaleString("vi-VN") + " VND";
 }
 
-// Hiển thị thông báo Toast
+/**
+ * Hiển thị thông báo Toast nổi ở góc phải màn hình
+ * @param {string} message Nội dung thông báo (hỗ trợ HTML)
+ * @param {string} type Phân loại thông báo: "success" | "warning" | "info"
+ */
 function showToast(message, type = "success") {
     const container = document.getElementById("toast-container");
     if (!container) return;
+
     const iconMap = {
         success: '<i class="fa-solid fa-circle-check text-success fs-4"></i>',
         warning: '<i class="fa-solid fa-triangle-exclamation text-warning fs-4"></i>',
         info: '<i class="fa-solid fa-wand-magic-sparkles text-primary fs-4"></i>'
     };
+
     const toast = document.createElement("div");
     toast.className = "custom-toast";
     toast.innerHTML = `
@@ -108,6 +190,7 @@ function showToast(message, type = "success") {
         <div class="small fw-bold">${message}</div>
     `;
     container.appendChild(toast);
+
     setTimeout(() => {
         toast.style.opacity = "0";
         toast.style.transform = "translateX(30px)";
@@ -116,7 +199,9 @@ function showToast(message, type = "success") {
     }, 3200);
 }
 
-// Cập nhật số lượng trên các icon Header & Mobile Nav
+/**
+ * Cập nhật số lượng đếm trên các huy hiệu (Badge) Header & Thanh điều hướng di động
+ */
 function updateBadges() {
     const totalCartQty = AppState.cart.reduce((sum, item) => sum + item.qty, 0);
     document.querySelectorAll(".cart-count-badge").forEach(el => (el.textContent = totalCartQty));
@@ -124,7 +209,69 @@ function updateBadges() {
     document.querySelectorAll(".order-count-badge").forEach(el => (el.textContent = AppState.orders.length));
 }
 
-// Tạo HTML thẻ Sản phẩm chuẩn mẫu bptmai02.id.vn
+/**
+ * Sao chép nội dung văn bản vào khay nhớ tạm (Clipboard) và hiển thị thông báo
+ * @param {string} text Nội dung cần sao chép
+ * @param {string} label Tên trường thông tin (VD: "Số tài khoản", "Số tiền")
+ */
+function copyText(text, label) {
+    navigator.clipboard.writeText(text);
+    showToast(`Đã sao chép <strong>${label}</strong>: ${text}`);
+}
+
+/**
+ * Khởi động đồng hồ đếm ngược hiệu lực của mã thanh toán VietQR (mặc định 10 phút)
+ * @param {number} seconds Tổng số giây đếm ngược
+ */
+function startQRCountdown(seconds) {
+    if (AppState.qrCountdownTimer) clearInterval(AppState.qrCountdownTimer);
+    let remaining = seconds;
+    AppState.qrCountdownTimer = setInterval(() => {
+        remaining--;
+        const el = document.getElementById("qr-countdown");
+        if (!el) {
+            clearInterval(AppState.qrCountdownTimer);
+            return;
+        }
+        if (remaining <= 0) {
+            clearInterval(AppState.qrCountdownTimer);
+            el.textContent = "Hết hạn";
+            return;
+        }
+        const m = String(Math.floor(remaining / 60)).padStart(2, "0");
+        const s = String(remaining % 60).padStart(2, "0");
+        el.textContent = `${m}:${s}`;
+    }, 1000);
+}
+
+/**
+ * Khởi tạo đồng hồ đếm ngược cho khu vực Flash Sale
+ */
+function initFlashSaleTimer() {
+    let totalSec = 3 * 3600 + 45 * 60 + 18;
+    setInterval(() => {
+        totalSec = totalSec > 0 ? totalSec - 1 : 14400;
+        const h = String(Math.floor(totalSec / 3600)).padStart(2, "0");
+        const m = String(Math.floor((totalSec % 3600) / 60)).padStart(2, "0");
+        const s = String(totalSec % 60).padStart(2, "0");
+        const elH = document.getElementById("fs-hours");
+        const elM = document.getElementById("fs-mins");
+        const elS = document.getElementById("fs-secs");
+        if (elH) elH.textContent = h;
+        if (elM) elM.textContent = m;
+        if (elS) elS.textContent = s;
+    }, 1000);
+}
+
+// =========================================================================
+// MODULE 3: KHO SÁCH & BỘ LỌC TÌM KIẾM
+// =========================================================================
+
+/**
+ * Tạo chuỗi HTML thẻ sản phẩm chuẩn giao diện Mộc Miên Books
+ * @param {object} product Đối tượng sản phẩm sách
+ * @returns {string} Chuỗi HTML của thẻ sản phẩm
+ */
 function createProductCardHTML(product) {
     const isLiked = AppState.wishlist.includes(product.id);
     return `
@@ -176,9 +323,11 @@ function createProductCardHTML(product) {
     `;
 }
 
-// Render toàn bộ giao diện Trang chủ
+/**
+ * Render toàn bộ dữ liệu lên các khu vực trên trang chủ
+ */
 function renderAllSections() {
-    // 1. Render Bubble Categories
+    // 1. Render Danh mục dạng bong bóng tròn (Bubble Categories)
     const cateContainer = document.getElementById("bubble-categories-list");
     if (cateContainer) {
         cateContainer.innerHTML = CATEGORIES.map(cat => `
@@ -194,31 +343,31 @@ function renderAllSections() {
         `).join("");
     }
 
-    // 2. Render Flash Sale
+    // 2. Render Khu vực Flash Sale giá sốc
     const flashContainer = document.getElementById("flash-sale-grid");
     if (flashContainer) {
         const flashProducts = PRODUCTS.filter(p => p.isFlashSale).slice(0, 4);
         flashContainer.innerHTML = flashProducts.map(createProductCardHTML).join("");
     }
 
-    // 3. Render Sách Siêu Hot
+    // 3. Render Sách Nổi Bật & Bán Chạy (Hot Books)
     const hotContainer = document.getElementById("hot-books-grid");
     if (hotContainer) {
         const hotProducts = PRODUCTS.filter(p => p.isHot && !p.isGiftSet).slice(0, 8);
         hotContainer.innerHTML = hotProducts.map(createProductCardHTML).join("");
     }
 
-    // 4. Render Set Quà Tặng Sách
+    // 4. Render Set Quà Tặng Sách Tinh Tế
     const giftContainer = document.getElementById("gift-sets-grid");
     if (giftContainer) {
         const giftProducts = PRODUCTS.filter(p => p.isGiftSet);
         giftContainer.innerHTML = giftProducts.map(createProductCardHTML).join("");
     }
 
-    // 5. Render Danh mục đầy đủ & Bộ lọc
+    // 5. Render Danh mục đầy đủ kèm Bộ lọc tìm kiếm
     renderCatalogue();
 
-    // 6. Render Cảm nhận khách hàng
+    // 6. Render Cảm nhận và Đánh giá từ độc giả
     const feedbackContainer = document.getElementById("feedback-grid");
     if (feedbackContainer) {
         feedbackContainer.innerHTML = CUSTOMER_FEEDBACKS.map(fb => `
@@ -240,7 +389,7 @@ function renderAllSections() {
         `).join("");
     }
 
-    // 7. Render Tin tức & Dịch vụ
+    // 7. Render Bài viết Blog & Hướng dẫn mua hàng
     const blogContainer = document.getElementById("blog-grid");
     if (blogContainer) {
         blogContainer.innerHTML = BLOG_POSTS.map(post => `
@@ -279,7 +428,9 @@ function renderAllSections() {
     updateBadges();
 }
 
-// Lọc và hiển thị danh sách sản phẩm tại khu vực Kho Sách
+/**
+ * Lọc và hiển thị danh mục sách theo từ khóa, thể loại, mức giá và tiêu chí sắp xếp
+ */
 function renderCatalogue() {
     const grid = document.getElementById("catalogue-grid");
     if (!grid) return;
@@ -287,10 +438,12 @@ function renderCatalogue() {
     let list = [...PRODUCTS];
     const { category, keyword, sort, priceRange } = AppState.currentFilter;
 
+    // Lọc theo thể loại
     if (category !== "all") {
         list = list.filter(p => p.category === category);
     }
 
+    // Lọc theo từ khóa tìm kiếm (tiêu đề, tác giả, mã, danh mục)
     if (keyword.trim() !== "") {
         const kw = keyword.toLowerCase().trim();
         list = list.filter(p =>
@@ -301,6 +454,7 @@ function renderCatalogue() {
         );
     }
 
+    // Lọc theo khoảng giá
     if (priceRange === "under100") {
         list = list.filter(p => p.price < 100000);
     } else if (priceRange === "100to200") {
@@ -309,6 +463,7 @@ function renderCatalogue() {
         list = list.filter(p => p.price > 200000);
     }
 
+    // Sắp xếp danh sách
     if (sort === "price-asc") {
         list.sort((a, b) => a.price - b.price);
     } else if (sort === "price-desc") {
@@ -322,6 +477,7 @@ function renderCatalogue() {
     const countEl = document.getElementById("catalogue-count");
     if (countEl) countEl.textContent = `${list.length} đầu sách`;
 
+    // Hiển thị trạng thái trống nếu không tìm thấy
     if (list.length === 0) {
         grid.innerHTML = `
             <div class="col-12 text-center py-5">
@@ -337,6 +493,10 @@ function renderCatalogue() {
     grid.innerHTML = list.map(createProductCardHTML).join("");
 }
 
+/**
+ * Lọc nhanh theo danh mục và cuộn mượt tới khu vực kho sách
+ * @param {string} cateId ID của thể loại sách
+ */
 function filterByCategory(cateId) {
     AppState.currentFilter.category = cateId;
     const selectCate = document.getElementById("filter-category");
@@ -346,6 +506,9 @@ function filterByCategory(cateId) {
     if (section) section.scrollIntoView({ behavior: "smooth" });
 }
 
+/**
+ * Đặt lại toàn bộ bộ lọc kho sách về trạng thái mặc định
+ */
 function resetCatalogueFilter() {
     AppState.currentFilter = { category: "all", keyword: "", sort: "default", priceRange: "all" };
     const fCat = document.getElementById("filter-category");
@@ -360,9 +523,17 @@ function resetCatalogueFilter() {
 }
 
 // =========================================================================
-// GIỎ HÀNG, YÊU THÍCH & SO SÁNH
+// MODULE 4: GIỎ HÀNG, DANH SÁCH YÊU THÍCH & SO SÁNH SÁCH
 // =========================================================================
+
+/**
+ * Thêm sản phẩm vào giỏ hàng (yêu cầu đăng nhập tài khoản trước)
+ * @param {number|string} productId ID sản phẩm
+ * @param {number} qty Số lượng cần thêm (mặc định 1)
+ * @param {boolean} showToastNotification Có hiển thị toast thông báo hay không
+ */
 function addToCart(productId, qty = 1, showToastNotification = true) {
+    // 1. Kiểm tra xác thực tài khoản: Bắt buộc đăng nhập
     if (!AppState.currentUser) {
         AppState.pendingAction = {
             type: "addToCart",
@@ -392,25 +563,38 @@ function addToCart(productId, qty = 1, showToastNotification = true) {
             qty: Number(qty)
         });
     }
+
     saveCart();
     renderSidebarCart();
+
     if (showToastNotification) {
         showToast(`Đã thêm <strong>"${product.title}"</strong> vào giỏ hàng!`);
     }
 }
 
+/**
+ * Cập nhật số lượng sản phẩm trong giỏ hàng (+1 hoặc -1)
+ * @param {number|string} productId ID sản phẩm
+ * @param {number} delta Độ biến thiên số lượng (+1 hoặc -1)
+ */
 function updateCartQty(productId, delta) {
     const item = AppState.cart.find(i => i.id === Number(productId));
     if (!item) return;
+
     item.qty += delta;
     if (item.qty <= 0) {
         AppState.cart = AppState.cart.filter(i => i.id !== Number(productId));
     }
+
     saveCart();
     renderSidebarCart();
     renderCheckoutSummary();
 }
 
+/**
+ * Xóa một sản phẩm ra khỏi giỏ hàng
+ * @param {number|string} productId ID sản phẩm
+ */
 function removeFromCart(productId) {
     AppState.cart = AppState.cart.filter(i => i.id !== Number(productId));
     saveCart();
@@ -418,15 +602,23 @@ function removeFromCart(productId) {
     renderCheckoutSummary();
 }
 
+/**
+ * Bật/tắt thanh trượt giỏ hàng mini (Sidebar Cart)
+ * @param {boolean|null} forceOpen Ép mở/đóng hoặc để tự động đảo trạng thái
+ */
 function toggleSidebarCart(forceOpen = null) {
     const sidebar = document.getElementById("sidebar-mini-cart");
     const backdrop = document.getElementById("cart-backdrop");
     if (!sidebar || !backdrop) return;
+
     const isOpen = forceOpen !== null ? forceOpen : !sidebar.classList.contains("open");
     sidebar.classList.toggle("open", isOpen);
     backdrop.classList.toggle("show", isOpen);
 }
 
+/**
+ * Render giao diện danh sách sách trong thanh giỏ hàng trượt
+ */
 function renderSidebarCart() {
     const listEl = document.getElementById("mini-cart-items");
     const totalEl = document.getElementById("mini-cart-total");
@@ -470,7 +662,11 @@ function renderSidebarCart() {
     totalEl.textContent = formatVND(sum);
 }
 
-// Mua ngay 1 chạm -> Mở thẳng Checkout VietQR (không hiển thị toast đã thêm vào giỏ)
+/**
+ * Mua ngay 1 chạm -> Thêm vào giỏ (không hiện thông báo giỏ) và mở thẳng Checkout
+ * @param {number|string} productId ID sản phẩm
+ * @param {number} qty Số lượng đặt mua
+ */
 function buyNowVietQR(productId, qty = 1) {
     if (!AppState.currentUser) {
         AppState.pendingAction = {
@@ -486,83 +682,126 @@ function buyNowVietQR(productId, qty = 1) {
     openCheckoutModal();
 }
 
+/**
+ * Thêm hoặc bớt sản phẩm khỏi danh sách yêu thích
+ * @param {number|string} productId ID sản phẩm
+ */
 function toggleWishlist(productId) {
     const idx = AppState.wishlist.indexOf(Number(productId));
-    const p = PRODUCTS.find(x => x.id === Number(productId));
-    if (idx >= 0) {
+    if (idx > -1) {
         AppState.wishlist.splice(idx, 1);
-        showToast(`Đã bỏ "${p ? p.title : ""}" khỏi danh sách yêu thích`, "info");
+        showToast("Đã xóa khỏi Tủ sách yêu thích", "info");
     } else {
         AppState.wishlist.push(Number(productId));
-        showToast(`Đã lưu ❤️ "${p ? p.title : ""}" vào danh sách yêu thích!`);
+        showToast("Đã lưu vào Tủ sách yêu thích ❤️");
     }
     saveWishlist();
-    renderAllSections();
+    renderCatalogue();
 }
 
+/**
+ * Mở modal hiển thị danh sách sách yêu thích của khách
+ */
 function openWishlistModal() {
     const body = document.getElementById("wishlist-modal-body");
     if (!body) return;
+
     const likedProducts = PRODUCTS.filter(p => AppState.wishlist.includes(p.id));
     if (likedProducts.length === 0) {
-        body.innerHTML = `<div class="text-center py-4 text-muted">Danh sách yêu thích đang trống. Hãy thả tim ❤️ cho cuốn sách bạn thích nhé!</div>`;
+        body.innerHTML = `
+            <div class="text-center py-5 text-muted">
+                <i class="fa-solid fa-heart-crack fa-3x mb-3" style="color:var(--primary-light);"></i>
+                <h5 class="fw-bold">Tủ sách yêu thích đang trống</h5>
+                <p>Hãy bấm vào biểu tượng trái tim ở mỗi cuốn sách để lưu lại danh sách muốn đọc bạn nhé!</p>
+            </div>
+        `;
     } else {
-        body.innerHTML = `<div class="row">${likedProducts.map(createProductCardHTML).join("")}</div>`;
+        body.innerHTML = `
+            <div class="row">
+                ${likedProducts.map(createProductCardHTML).join("")}
+            </div>
+        `;
     }
     new bootstrap.Modal(document.getElementById("wishlistModal")).show();
 }
 
+/**
+ * Thêm sản phẩm vào danh sách so sánh (tối đa 3 cuốn)
+ * @param {number|string} productId ID sản phẩm
+ */
 function addToCompare(productId) {
-    const id = Number(productId);
-    if (!AppState.compare.includes(id)) {
-        if (AppState.compare.length >= 3) AppState.compare.shift();
-        AppState.compare.push(id);
+    if (AppState.compare.includes(Number(productId))) {
+        showToast("Sách này đã có trong danh sách so sánh!", "warning");
+        return;
     }
+    if (AppState.compare.length >= 3) {
+        AppState.compare.shift(); // Giới hạn tối đa 3 cuốn
+    }
+    AppState.compare.push(Number(productId));
     renderCompareModal();
     new bootstrap.Modal(document.getElementById("compareModal")).show();
 }
 
+/**
+ * Render bảng so sánh thông số các cuốn sách trong modal
+ */
 function renderCompareModal() {
     const body = document.getElementById("compare-modal-body");
     if (!body) return;
-    const items = PRODUCTS.filter(p => AppState.compare.includes(p.id));
-    if (items.length === 0) {
-        body.innerHTML = `<p class="text-center py-4 text-muted">Chưa có sản phẩm nào để so sánh.</p>`;
+
+    const list = PRODUCTS.filter(p => AppState.compare.includes(p.id));
+    if (list.length === 0) {
+        body.innerHTML = '<div class="text-center py-4 text-muted">Chưa chọn sách để so sánh.</div>';
         return;
     }
+
     body.innerHTML = `
         <div class="table-responsive">
-            <table class="table table-bordered align-middle text-center">
+            <table class="table table-bordered text-center align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th>Tiêu chí</th>
-                        ${items.map(p => `<th>${p.title}</th>`).join("")}
+                        <th style="width: 140px;">Tiêu chí</th>
+                        ${list.map(p => `
+                            <th>
+                                <img src="${p.image}" style="width:80px;height:80px;object-fit:cover;border-radius:12px;" class="mb-2">
+                                <div class="fw-bold small">${p.title}</div>
+                                <button class="btn btn-sm text-danger mt-1" onclick="AppState.compare=AppState.compare.filter(id=>id!==${p.id}); renderCompareModal();">
+                                    <i class="fa-solid fa-xmark"></i> Bỏ
+                                </button>
+                            </th>
+                        `).join("")}
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td class="fw-bold">Hình ảnh</td>
-                        ${items.map(p => `<td><img src="${p.image}" style="width:90px;height:90px;object-fit:cover;border-radius:12px;"></td>`).join("")}
-                    </tr>
-                    <tr>
                         <td class="fw-bold">Giá bán</td>
-                        ${items.map(p => `<td class="fw-bold text-danger">${formatVND(p.price)}</td>`).join("")}
+                        ${list.map(p => `<td class="fw-bold text-danger">${formatVND(p.price)}</td>`).join("")}
                     </tr>
                     <tr>
                         <td class="fw-bold">Tác giả</td>
-                        ${items.map(p => `<td>${p.author}</td>`).join("")}
+                        ${list.map(p => `<td>${p.author}</td>`).join("")}
                     </tr>
                     <tr>
-                        <td class="fw-bold">Nhà xuất bản / Số trang</td>
-                        ${items.map(p => `<td>${p.publisher} (${p.pages} trang)</td>`).join("")}
+                        <td class="fw-bold">Thể loại</td>
+                        ${list.map(p => `<td>${p.categoryName}</td>`).join("")}
                     </tr>
                     <tr>
-                        <td class="fw-bold">Quy cách bìa</td>
-                        ${items.map(p => `<td>${p.coverType} - ${p.size}</td>`).join("")}
+                        <td class="fw-bold">Số trang & Hình thức</td>
+                        ${list.map(p => `<td>${p.pages} trang (${p.coverType})</td>`).join("")}
                     </tr>
                     <tr>
-                        <td class="fw-bold">Chọn mua</td>
-                        ${items.map(p => `<td><button class="btn-cute-primary btn-sm" onclick="buyNowVietQR(${p.id})" data-bs-dismiss="modal">Mua ngay VietQR</button></td>`).join("")}
+                        <td class="fw-bold">Đánh giá</td>
+                        ${list.map(p => `<td>⭐ ${p.rating} / 5 (${p.reviewCount} đánh giá)</td>`).join("")}
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Thao tác</td>
+                        ${list.map(p => `
+                            <td>
+                                <button class="btn btn-sm btn-primary rounded-pill px-3" onclick="buyNowVietQR(${p.id})">
+                                    <i class="fa-solid fa-qrcode me-1"></i>Mua ngay
+                                </button>
+                            </td>
+                        `).join("")}
                     </tr>
                 </tbody>
             </table>
@@ -571,8 +810,13 @@ function renderCompareModal() {
 }
 
 // =========================================================================
-// CHI TIẾT SẢN PHẨM (MODAL CHUẨN TRANG PRODUCT DETAIL CỦA BPTMAI02.ID.VN)
+// MODULE 5: CHI TIẾT SẢN PHẨM & BÀI VIẾT CẨM NANG
 // =========================================================================
+
+/**
+ * Mở modal xem nhanh chi tiết sản phẩm sách kèm hình ảnh, mô tả, thông số
+ * @param {number|string} productId ID sản phẩm
+ */
 function openProductDetail(productId) {
     const p = PRODUCTS.find(x => x.id === Number(productId));
     if (!p) return;
@@ -667,12 +911,16 @@ function openProductDetail(productId) {
     new bootstrap.Modal(document.getElementById("productDetailModal")).show();
 }
 
-// Mở bài viết Blog / Hướng dẫn đặt hàng
+/**
+ * Mở modal bài viết Blog, chính sách hoặc hướng dẫn đặt hàng
+ * @param {number|string} postId ID bài viết
+ */
 function openBlogModal(postId) {
     const post = BLOG_POSTS.find(b => b.id === Number(postId));
     if (!post) return;
     const body = document.getElementById("blog-modal-body");
     if (!body) return;
+
     body.innerHTML = `
         <span class="badge rounded-pill mb-2" style="background:var(--primary-soft);color:var(--primary);">${post.category}</span>
         <h3 class="fw-bold mb-2" style="color:var(--primary);">${post.title}</h3>
@@ -684,8 +932,13 @@ function openBlogModal(postId) {
 }
 
 // =========================================================================
-// THANH TOÁN & TỰ ĐỘNG HÓA VIETQR + MAKE.COM + GOOGLE FORM
+// MODULE 6: ĐẶT HÀNG, TÍNH TOÁN & THANH TOÁN VIETQR NAPAS 247
 // =========================================================================
+
+/**
+ * Tính toán tổng giá trị đơn hàng (tạm tính, phí vận chuyển, giảm giá, tổng thanh toán)
+ * @returns {object} { subtotal, shippingFee, discount, total }
+ */
 function calculateOrderTotals() {
     const subtotal = AppState.cart.reduce((s, i) => s + i.price * i.qty, 0);
     let shippingFee = subtotal >= 250000 || subtotal === 0 ? 0 : 25000;
@@ -706,6 +959,9 @@ function calculateOrderTotals() {
     return { subtotal, shippingFee, discount, total };
 }
 
+/**
+ * Xử lý kiểm tra và áp dụng mã giảm giá / freeship
+ */
 function applyCouponCode() {
     const input = document.getElementById("checkout-coupon-input");
     if (!input) return;
@@ -722,19 +978,29 @@ function applyCouponCode() {
     showToast(`Áp dụng thành công mã <strong>${code}</strong> (${found.desc})!`);
 }
 
+/**
+ * Mở modal đặt hàng và thanh toán (kiểm tra đăng nhập và giỏ hàng)
+ */
 function openCheckoutModal() {
     toggleSidebarCart(false);
+
+    // 1. Kiểm tra đăng nhập
     if (!AppState.currentUser) {
         AppState.pendingAction = { type: "checkout" };
         showToast("🔐 Vui lòng đăng nhập tài khoản để tiến hành đặt hàng!", "info");
         openUserModal();
         return;
     }
+
+    // 2. Kiểm tra giỏ hàng
     if (AppState.cart.length === 0) {
         showToast("Giỏ hàng của bạn đang trống, hãy chọn ít nhất 1 cuốn sách nhé!", "warning");
         return;
     }
+
     renderCheckoutSummary();
+
+    // 3. Tự động điền thông tin tài khoản vào form nếu có
     if (AppState.currentUser) {
         const nameInput = document.getElementById("ck-fullname");
         const phoneInput = document.getElementById("ck-phone");
@@ -743,11 +1009,15 @@ function openCheckoutModal() {
         if (phoneInput && !phoneInput.value && AppState.currentUser.phone) phoneInput.value = AppState.currentUser.phone;
         if (emailInput && !emailInput.value && AppState.currentUser.email) emailInput.value = AppState.currentUser.email;
     }
+
     const modalEl = document.getElementById("checkoutModal");
     const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     modal.show();
 }
 
+/**
+ * Render thông tin tóm tắt giỏ hàng, tiền cước và mã giảm giá trong form thanh toán
+ */
 function renderCheckoutSummary() {
     const container = document.getElementById("checkout-order-items");
     if (!container) return;
@@ -777,6 +1047,10 @@ function renderCheckoutSummary() {
     toggleCheckoutPaymentMethod();
 }
 
+/**
+ * Cập nhật động mã QR xem trước khi khách nhập SĐT trong form đặt hàng
+ * @param {number} totalAmount Tổng số tiền đơn hàng
+ */
 function updateCheckoutLiveQRPreview(totalAmount) {
     const qrImg = document.getElementById("ck-preview-qr-img");
     if (!qrImg) return;
@@ -795,6 +1069,9 @@ function updateCheckoutLiveQRPreview(totalAmount) {
     if (elAmount) elAmount.textContent = formatVND(totalAmount);
 }
 
+/**
+ * Chuyển đổi hiển thị giữa hình thức Thanh toán trước (VietQR) và COD
+ */
 function toggleCheckoutPaymentMethod() {
     const selectedMethod = document.querySelector('input[name="ck-payment"]:checked')?.value || "VIETQR";
     const previewBox = document.getElementById("ck-live-vietqr-preview");
@@ -813,7 +1090,10 @@ function toggleCheckoutPaymentMethod() {
     }
 }
 
-// Xử lý khi khách nhấn Đặt hàng
+/**
+ * Xử lý khi khách hàng nhấn xác nhận Đặt hàng trong modal Checkout
+ * @param {Event} event Sự kiện submit form
+ */
 async function submitOrderAndGenerateVietQR(event) {
     if (event) event.preventDefault();
 
@@ -866,7 +1146,7 @@ async function submitOrderAndGenerateVietQR(event) {
     const ckModal = bootstrap.Modal.getInstance(document.getElementById("checkoutModal"));
     if (ckModal) ckModal.hide();
 
-    // Lưu vào danh sách đơn hàng
+    // Lưu đơn vào bộ nhớ
     AppState.orders.unshift(newOrder);
     AppState.activeOrderForQR = newOrder;
     AppState.cart = [];
@@ -876,7 +1156,7 @@ async function submitOrderAndGenerateVietQR(event) {
     renderSidebarCart();
     renderOrdersTable();
 
-    // Đồng bộ đơn hàng lên Google Sheet và chờ kết quả
+    // Đồng bộ đơn hàng lên Google Sheets ngầm và an toàn
     try {
         await triggerSalesAutomationWebhook(newOrder);
     } catch (e) {
@@ -888,8 +1168,7 @@ async function submitOrderAndGenerateVietQR(event) {
         }
     }
 
-    // Nếu khách chọn Thanh toán trước (VIETQR) -> Hiển thị ngay màn hình QR thanh toán
-    // Nếu khách chọn COD -> Hiển thị thông báo đặt hàng COD thành công (kèm nút xem QR nếu muốn trả trước)
+    // Điều hướng hiển thị kết quả theo phương thức thanh toán
     if (paymentMethod === "VIETQR") {
         openVietQRPaymentModal(newOrder);
     } else {
@@ -897,9 +1176,14 @@ async function submitOrderAndGenerateVietQR(event) {
     }
 }
 
+/**
+ * Hiển thị màn hình thông báo Đặt hàng COD thành công
+ * @param {object} order Đối tượng đơn hàng vừa tạo
+ */
 function openCodOrderSuccessModal(order) {
     const modalBody = document.getElementById("vietqr-payment-modal-body");
     if (!modalBody) return;
+
     modalBody.innerHTML = `
         <div class="text-center p-4">
             <div class="mb-3">
@@ -934,20 +1218,28 @@ function openCodOrderSuccessModal(order) {
     bootstrap.Modal.getOrCreateInstance(modalEl).show();
 }
 
-// Hàm tạo URL ảnh VietQR chuẩn EMVCo Napas247
+/**
+ * Xây dựng URL ảnh mã VietQR Napas 247 động chuẩn quốc tế EMVCo
+ * @param {number} amount Số tiền chuyển khoản
+ * @param {string} addInfo Nội dung chuyển khoản
+ * @returns {string} URL hình ảnh mã VietQR
+ */
 function buildVietQRImageUrl(amount, addInfo) {
     const { bankId, accountNo, accountName, qrTemplate } = AppState.config;
     const cleanInfo = addInfo.replace(/[^a-zA-Z0-9 ]/g, "").trim();
     return `https://img.vietqr.io/image/${bankId}-${accountNo}-${qrTemplate || "compact2"}.png?amount=${amount}&addInfo=${encodeURIComponent(cleanInfo)}&accountName=${encodeURIComponent(accountName)}`;
 }
 
-// Mở giao diện Thanh toán VietQR trên Di động
+/**
+ * Mở giao diện Thanh toán VietQR trên Di động và máy tính
+ * @param {object} order Đối tượng đơn hàng cần thanh toán
+ */
 function openVietQRPaymentModal(order) {
     const transferContent = `MOCMIEN ${order.code} ${order.phone}`;
     const qrUrl = buildVietQRImageUrl(order.total, transferContent);
     const bankObj = VIETQR_BANKS.find(b => b.id === AppState.config.bankId) || VIETQR_BANKS[0];
 
-    // Deeplink mở app ngân hàng trên di động
+    // Deeplink mở trực tiếp app ngân hàng trên smartphone
     const deepLinkUrl = `https://dl.vietqr.io/pay?app=${AppState.config.bankId.toLowerCase()}&ba=${AppState.config.accountNo}@${AppState.config.bankId}&am=${order.total}&tn=${encodeURIComponent(transferContent)}`;
 
     const modalBody = document.getElementById("vietqr-payment-modal-body");
@@ -1075,33 +1367,10 @@ function openVietQRPaymentModal(order) {
     startQRCountdown(600);
 }
 
-function startQRCountdown(seconds) {
-    if (AppState.qrCountdownTimer) clearInterval(AppState.qrCountdownTimer);
-    let remaining = seconds;
-    AppState.qrCountdownTimer = setInterval(() => {
-        remaining--;
-        const el = document.getElementById("qr-countdown");
-        if (!el) {
-            clearInterval(AppState.qrCountdownTimer);
-            return;
-        }
-        if (remaining <= 0) {
-            clearInterval(AppState.qrCountdownTimer);
-            el.textContent = "Hết hạn";
-            return;
-        }
-        const m = String(Math.floor(remaining / 60)).padStart(2, "0");
-        const s = String(remaining % 60).padStart(2, "0");
-        el.textContent = `${m}:${s}`;
-    }, 1000);
-}
-
-function copyText(text, label) {
-    navigator.clipboard.writeText(text);
-    showToast(`Đã sao chép <strong>${label}</strong>: ${text}`);
-}
-
-// Xác nhận hoàn tất thanh toán VietQR & cập nhật trạng thái tự động hóa
+/**
+ * Xác nhận khách hàng đã chuyển khoản VietQR thành công & đồng bộ cập nhật lên Google Sheets
+ * @param {string} orderCode Mã đơn hàng
+ */
 function confirmVietQRPaymentSuccess(orderCode) {
     const order = AppState.orders.find(o => o.code === orderCode);
     if (order) {
@@ -1121,7 +1390,7 @@ function confirmVietQRPaymentSuccess(orderCode) {
 
     const step4 = document.getElementById("auto-step-4");
     if (step4) {
-        step4.innerHTML = `<span class="text-success fw-bold">✅ [Bước 4] Xác nhận thanh toán VietQR thành công! Đã gửi Email/Zalo xác nhận đơn #${orderCode}.</span>`;
+        step4.innerHTML = `<span class="text-success fw-bold">✅ [Bước 4] Xác nhận thanh toán VietQR thành công! Đã ghi nhận thanh toán đơn #${orderCode}.</span>`;
     }
 
     const actions = document.getElementById("payment-confirm-actions");
@@ -1140,7 +1409,14 @@ function confirmVietQRPaymentSuccess(orderCode) {
     showToast(`🎉 Đơn hàng #${orderCode} đã được xác nhận thanh toán VietQR thành công!`);
 }
 
-// Hàm gửi dữ liệu tới Google Apps Script Web App (hỗ trợ đa trình duyệt, bỏ cookie đa tài khoản để tránh lỗi 302)
+// =========================================================================
+// MODULE 7: TỰ ĐỘNG HÓA GOOGLE SHEETS & ĐỒNG BỘ DỮ LIỆU
+// =========================================================================
+
+/**
+ * Lấy danh sách các URL Web App của Google Apps Script từ cấu hình
+ * @returns {string[]} Danh sách URL
+ */
 function getGoogleSheetUrls() {
     const urls = new Set();
     if (SHOP_DEFAULT_CONFIG.googleSheetWebAppUrl && SHOP_DEFAULT_CONFIG.googleSheetWebAppUrl.startsWith("http")) {
@@ -1152,7 +1428,12 @@ function getGoogleSheetUrls() {
     return Array.from(urls);
 }
 
-// Gửi dữ liệu và trả về true nếu Google Sheets xác nhận đã ghi (hoặc đã gửi đi ở chế độ dự phòng)
+/**
+ * Gửi payload đơn hàng / lời nhắn liên hệ tới Google Apps Script Web App
+ * Hỗ trợ chế độ dự phòng CORS (no-cors) nếu trình duyệt chặn preflight
+ * @param {object} payload Dữ liệu cần gửi
+ * @returns {Promise<boolean>} Trả về true nếu gửi thành công
+ */
 async function sendPayloadToGoogleSheets(payload) {
     const urls = getGoogleSheetUrls();
     if (urls.length === 0) {
@@ -1172,7 +1453,7 @@ async function sendPayloadToGoogleSheets(payload) {
             });
             const text = await res.text();
             console.log("[Google Sheets] Phản hồi:", text);
-            return /"status"\s*:\s*"(success|updated)"/.test(text);
+            return /"status"s*:s*"(success|updated)"/.test(text);
         } catch (err) {
             console.warn("[Google Sheets] Lỗi gửi (thử lại chế độ no-cors):", err);
             try {
@@ -1193,9 +1474,11 @@ async function sendPayloadToGoogleSheets(payload) {
     return results.some(Boolean);
 }
 
-// =========================================================================
-// ĐỒNG BỘ TỰ ĐỘNG ĐƠN HÀNG VỀ GOOGLE SHEETS (APPS SCRIPT) / MAKE.COM / FORM
-// =========================================================================
+/**
+ * Đẩy tự động dữ liệu đơn hàng tới Google Sheets, Make.com hoặc Google Form
+ * @param {object} order Đối tượng đơn hàng
+ * @param {string} actionType "create_order" hoặc "update_payment"
+ */
 async function triggerSalesAutomationWebhook(order, actionType = "create_order") {
     const itemsSummary = (order.items || []).map(i => `${i.title} (x${i.qty})`).join(", ");
     const transferContent = `MOCMIEN ${order.code} ${order.phone}`;
@@ -1222,7 +1505,7 @@ async function triggerSalesAutomationWebhook(order, actionType = "create_order")
         vietqr_url: buildVietQRImageUrl(order.total, transferContent)
     };
 
-    // 1. Đổ dữ liệu trực tiếp về Google Sheets qua Google Apps Script Web App URL
+    // 1. Đổ dữ liệu về Google Sheets qua Apps Script Web App
     const sentToSheet = await sendPayloadToGoogleSheets(payload);
     if (sentToSheet) {
         order.automationSync = "Đã tự động đổ về Google Sheets";
@@ -1278,7 +1561,9 @@ async function triggerSalesAutomationWebhook(order, actionType = "create_order")
     }, 900);
 }
 
-// Bảng lịch sử đơn hàng của chính khách hàng
+/**
+ * Hiển thị bảng lịch sử đơn hàng của chính khách hàng
+ */
 function renderOrdersTable() {
     const tbody = document.getElementById("automation-orders-tbody");
     if (!tbody) return;
@@ -1320,6 +1605,9 @@ function renderOrdersTable() {
     `).join("");
 }
 
+/**
+ * Kiểm tra kết nối tới Google Sheet (Dành cho kiểm thử hệ thống)
+ */
 async function testGoogleSheetConnection() {
     const btn = document.getElementById("btn-test-gsheet");
     if (btn) {
@@ -1361,6 +1649,10 @@ async function testGoogleSheetConnection() {
     }
 }
 
+/**
+ * Đẩy thủ công một đơn hàng cụ thể lên Google Sheet
+ * @param {string} orderCode Mã đơn hàng
+ */
 async function manuallySyncOrderToSheet(orderCode) {
     const order = AppState.orders.find(o => o.code === orderCode);
     if (!order) return;
@@ -1369,6 +1661,9 @@ async function manuallySyncOrderToSheet(orderCode) {
     renderOrdersTable();
 }
 
+/**
+ * Đồng bộ toàn bộ các đơn hàng chưa lên Google Sheet
+ */
 async function syncAllPendingOrdersToSheet() {
     const btn = document.getElementById("btn-sync-all-gsheet");
     if (btn) {
@@ -1397,6 +1692,10 @@ async function syncAllPendingOrdersToSheet() {
     }
 }
 
+/**
+ * Mở lại mã thanh toán VietQR cho một đơn hàng đã đặt
+ * @param {string} orderCode Mã đơn hàng
+ */
 function reopenOrderQR(orderCode) {
     const order = AppState.orders.find(o => o.code === orderCode);
     if (!order) return;
@@ -1405,7 +1704,9 @@ function reopenOrderQR(orderCode) {
     openVietQRPaymentModal(order);
 }
 
-// Xuất dữ liệu đơn hàng ra file CSV chuẩn Google Sheets
+/**
+ * Xuất dữ liệu đơn hàng ra tệp CSV hỗ trợ mở bằng Microsoft Excel hoặc Google Sheets
+ */
 function exportOrdersToCSV() {
     const headers = ["Ma_Don_Hang", "Thoi_Gian", "Khach_Hang", "So_Dien_Thoai", "Email", "Dia_Chi", "San_Pham", "Tong_Tien_VND", "Trang_Thai_Thanh_Toan", "Goi_Qua_Thiep"];
     const rows = AppState.orders.map(o => [
@@ -1431,12 +1732,17 @@ function exportOrdersToCSV() {
     showToast("Đã xuất danh sách đơn hàng (.CSV) thành công!");
 }
 
-// Mở cửa sổ Lịch sử đơn hàng của khách hàng
+/**
+ * Mở cửa sổ Lịch sử đơn hàng của chính khách hàng
+ */
 function openAutomationConfigModal() {
     renderOrdersTable();
     new bootstrap.Modal(document.getElementById("automationConfigModal")).show();
 }
 
+/**
+ * Cập nhật tên thương hiệu và các liên kết mạng xã hội động trên toàn bộ giao diện
+ */
 function updateShopBrandingUI() {
     document.querySelectorAll(".dynamic-shop-name").forEach(el => (el.textContent = AppState.config.shopName));
     const linkMap = {
@@ -1453,24 +1759,9 @@ function updateShopBrandingUI() {
     });
 }
 
-// Đồng hồ đếm ngược Flash Sale
-function initFlashSaleTimer() {
-    let totalSec = 3 * 3600 + 45 * 60 + 18;
-    setInterval(() => {
-        totalSec = totalSec > 0 ? totalSec - 1 : 14400;
-        const h = String(Math.floor(totalSec / 3600)).padStart(2, "0");
-        const m = String(Math.floor((totalSec % 3600) / 60)).padStart(2, "0");
-        const s = String(totalSec % 60).padStart(2, "0");
-        const elH = document.getElementById("fs-hours");
-        const elM = document.getElementById("fs-mins");
-        const elS = document.getElementById("fs-secs");
-        if (elH) elH.textContent = h;
-        if (elM) elM.textContent = m;
-        if (elS) elS.textContent = s;
-    }, 1000);
-}
-
-// Tự động đẩy các đơn hàng đã đặt trong trình duyệt nhưng chưa đồng bộ lên Google Sheets
+/**
+ * Tự động đẩy các đơn hàng đã đặt trong trình duyệt nhưng chưa đồng bộ lên Google Sheets khi tải lại trang
+ */
 async function syncPendingOrdersToGoogleSheet() {
     if (!AppState.orders || AppState.orders.length === 0) return;
     const pending = [...AppState.orders].reverse().filter(o => !o.sheetSynced);
@@ -1479,13 +1770,17 @@ async function syncPendingOrdersToGoogleSheet() {
     }
 }
 
-// Gửi lời nhắn liên hệ (Đồng thời đổ về tab Lien_He trên Google Sheets nếu đã cấu hình)
+/**
+ * Gửi form liên hệ và ghi nhận vào tab Lien_He trên Google Sheets
+ * @param {Event} event Sự kiện submit form
+ */
 async function submitContactForm(event) {
     if (event) event.preventDefault();
     const name = document.getElementById("ct-name").value.trim();
     const phone = document.getElementById("ct-phone").value.trim();
     const subject = document.getElementById("ct-subject")?.value.trim() || "";
     const message = document.getElementById("ct-message")?.value.trim() || "";
+
     if (!name || !phone) {
         showToast("Vui lòng nhập Họ tên và Số điện thoại của bạn!", "warning");
         return;
@@ -1505,9 +1800,12 @@ async function submitContactForm(event) {
 }
 
 // =========================================================================
-// QUẢN LÝ ĐĂNG NHẬP / TÀI KHOẢN THÀNH VIÊN
+// MODULE 8: QUẢN LÝ TÀI KHOẢN, XÁC THỰC GOOGLE & FACEBOOK
 // =========================================================================
 
+/**
+ * Mở modal tài khoản / đăng nhập
+ */
 function openUserModal() {
     renderLoginModalContent();
     const modalEl = document.getElementById("loginModal");
@@ -1516,6 +1814,9 @@ function openUserModal() {
     }
 }
 
+/**
+ * Render nội dung modal đăng nhập hoặc thông tin tài khoản thành viên
+ */
 function renderLoginModalContent() {
     const wrapper = document.getElementById("login-modal-body-wrapper");
     if (!wrapper) return;
@@ -1590,70 +1891,78 @@ function renderLoginModalContent() {
     }
 }
 
+/**
+ * Xử lý đăng nhập thông thường (bằng SĐT hoặc Email)
+ * @param {Event} event Sự kiện submit form
+ */
 function handleLoginFormSubmit(event) {
     if (event) event.preventDefault();
-    const accountInput = document.getElementById("login-account-input")?.value.trim() || "";
-    const passInput = document.getElementById("login-password-input")?.value.trim() || "";
-    if (!accountInput) {
-        showToast("Vui lòng nhập Số điện thoại hoặc Email", "warning");
-        return;
-    }
-    if (!passInput) {
-        showToast("Vui lòng nhập Mật khẩu", "warning");
+    const account = document.getElementById("login-account-input")?.value.trim() || "";
+    const pass = document.getElementById("login-password-input")?.value || "";
+
+    if (!account || !pass) {
+        showToast("Vui lòng nhập đầy đủ Tài khoản và Mật khẩu!", "warning");
         return;
     }
 
-    const isEmail = accountInput.includes("@");
-    const isPhone = /^0\d{9,10}$/.test(accountInput.replace(/\s+/g, ""));
-    const displayName = isEmail ? accountInput.split("@")[0] : (isPhone ? `Khách hàng ${accountInput.slice(-4)}` : accountInput);
-
+    const rawName = account.includes("@") ? account.split("@")[0] : "Khách hàng " + account.slice(-4);
     const user = {
-        name: displayName,
-        account: accountInput,
-        email: isEmail ? accountInput : "",
-        phone: isPhone ? accountInput : "",
-        provider: "Mộc Miên"
+        name: rawName,
+        account: account,
+        email: account.includes("@") ? account : "",
+        phone: !account.includes("@") ? account : "",
+        provider: "MocMien"
     };
 
     completeLogin(user);
 }
 
+/**
+ * Khởi tạo thư viện Google Identity Services (GIS)
+ */
 function initGoogleIdentityServices() {
     const clientId = AppState.config.googleClientId || SHOP_DEFAULT_CONFIG.googleClientId;
-    if (clientId && window.google && window.google.accounts && window.google.accounts.id) {
-        try {
-            google.accounts.id.initialize({
-                client_id: clientId,
-                callback: handleGoogleCredentialResponse,
-                auto_select: false
-            });
-        } catch (e) {
-            console.warn("Lỗi khởi tạo Google GIS:", e);
-        }
+    if (!clientId || !window.google || !window.google.accounts || !window.google.accounts.id) return;
+
+    try {
+        google.accounts.id.initialize({
+            client_id: clientId,
+            callback: handleGoogleCredentialResponse,
+            auto_select: false,
+            cancel_on_tap_outside: true
+        });
+    } catch (e) {
+        console.warn("Lỗi khởi tạo Google GIS:", e);
     }
 }
 
+/**
+ * Xử lý phản hồi đăng nhập từ Google One-Tap / Popup
+ * @param {object} response Phản hồi từ Google GIS
+ */
 function handleGoogleCredentialResponse(response) {
-    if (response && response.credential) {
-        try {
-            const payload = parseJwt(response.credential);
-            const user = {
-                name: payload.name || "Khách hàng Google",
-                email: payload.email || "",
-                phone: "",
-                avatar: payload.picture || "",
-                account: payload.email || "",
-                provider: "Google",
-                googleId: payload.sub || ""
-            };
-            completeLogin(user);
-        } catch (e) {
-            console.error("Lỗi giải mã token Google:", e);
-            showToast("Không thể giải mã dữ liệu tài khoản Google", "warning");
-        }
+    if (!response || !response.credential) return;
+    try {
+        const payload = parseJwt(response.credential);
+        const user = {
+            name: payload.name || payload.email.split("@")[0],
+            email: payload.email,
+            account: payload.email,
+            avatar: payload.picture || "",
+            provider: "Google"
+        };
+        completeLogin(user);
+    } catch (err) {
+        console.error("Lỗi phân tích Google Token:", err);
+        showToast("Không thể xác thực tài khoản Google!", "warning");
     }
 }
 
+/**
+ * Giải mã chuỗi JWT từ Google
+ * @param {string} token Chuỗi token JWT
+ * @returns {object} Payload đã giải mã
+ */
 function parseJwt(token) {
     const base64Url = token.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -1663,6 +1972,10 @@ function parseJwt(token) {
     return JSON.parse(jsonPayload);
 }
 
+/**
+ * Xử lý đăng nhập bằng Google hoặc Facebook
+ * @param {string} provider "Google" hoặc "Facebook"
+ */
 function loginWithOAuth(provider) {
     if (provider === "Google") {
         const clientId = AppState.config.googleClientId || SHOP_DEFAULT_CONFIG.googleClientId;
@@ -1705,7 +2018,7 @@ function loginWithOAuth(provider) {
             }
         }
 
-        // 2. Nếu chưa cấu hình Google Client ID -> Mở form liên kết Gmail (chỉ liên kết Gmail, không hỏi địa chỉ giao hàng)
+        // 2. Nếu chưa cấu hình Google Client ID -> Mở form liên kết Gmail (không hỏi địa chỉ giao hàng)
         renderGoogleQuickLinkForm();
     } else if (provider === "Facebook") {
         const appId = AppState.config.facebookAppId || SHOP_DEFAULT_CONFIG.facebookAppId;
@@ -1740,6 +2053,10 @@ function loginWithOAuth(provider) {
     }
 }
 
+/**
+ * Mở cửa sổ Facebook chính thức để người dùng xác minh tài khoản
+ * Tự động giám sát khi người dùng đóng cửa sổ hoặc quay lại trang web Mộc Miên để hoàn tất đăng nhập
+ */
 function openFacebookLoginPage() {
     const fbLoginUrl = "https://www.facebook.com/login.php";
     AppState.isWaitingForFacebook = true;
@@ -1780,6 +2097,9 @@ function openFacebookLoginPage() {
     window.addEventListener("focus", onWindowFocus);
 }
 
+/**
+ * Hiển thị giao diện modal chờ xác minh tài khoản Facebook
+ */
 function renderFacebookVerificationModal() {
     const wrapper = document.getElementById("login-modal-body-wrapper");
     if (!wrapper) return;
@@ -1821,6 +2141,9 @@ function renderFacebookVerificationModal() {
     `;
 }
 
+/**
+ * Hoàn tất xác minh Facebook và tự động tiếp tục tác vụ mua hàng của khách
+ */
 function completeFacebookLoginDirectly() {
     AppState.isWaitingForFacebook = false;
     const user = {
@@ -1832,6 +2155,9 @@ function completeFacebookLoginDirectly() {
     completeLogin(user);
 }
 
+/**
+ * Hiển thị form liên kết nhanh Gmail (không bắt buộc nhập địa chỉ giao hàng)
+ */
 function renderGoogleQuickLinkForm() {
     const wrapper = document.getElementById("login-modal-body-wrapper");
     if (!wrapper) return;
@@ -1867,6 +2193,10 @@ function renderGoogleQuickLinkForm() {
     `;
 }
 
+/**
+ * Xử lý xác nhận form liên kết Gmail
+ * @param {Event} event Sự kiện submit form
+ */
 function handleGoogleQuickLinkSubmit(event) {
     if (event) event.preventDefault();
     const email = document.getElementById("google-quick-email")?.value.trim() || "";
@@ -1889,6 +2219,10 @@ function handleGoogleQuickLinkSubmit(event) {
     completeLogin(user);
 }
 
+/**
+ * Hoàn tất quá trình đăng nhập: Lưu LocalStorage, đóng modal và tự động tiếp tục tác vụ đang chờ
+ * @param {object} user Thông tin tài khoản người dùng
+ */
 function completeLogin(user) {
     AppState.currentUser = user;
     try {
@@ -1904,7 +2238,7 @@ function completeLogin(user) {
     showToast(`🎉 Chào mừng <strong>${user.name}</strong> đã đăng nhập thành công!`);
     updateAuthUI();
 
-    // Tự động tiếp tục hành động đang chờ (Mua ngay hoặc Thêm vào giỏ)
+    // Tự động tiếp tục hành động đang chờ (Mua ngay, Thêm vào giỏ hoặc Đặt hàng)
     if (AppState.pendingAction) {
         const action = AppState.pendingAction;
         AppState.pendingAction = null;
@@ -1920,6 +2254,9 @@ function completeLogin(user) {
     }
 }
 
+/**
+ * Đăng xuất tài khoản người dùng và làm mới giao diện
+ */
 function logoutUser() {
     AppState.currentUser = null;
     try {
@@ -1930,6 +2267,9 @@ function logoutUser() {
     renderLoginModalContent();
 }
 
+/**
+ * Cập nhật hiển thị nút tài khoản trên Header
+ */
 function updateAuthUI() {
     const btnUser = document.getElementById("btn-header-user");
     if (btnUser) {
@@ -1947,11 +2287,16 @@ function updateAuthUI() {
     }
 }
 
-// Khởi chạy khi DOM sẵn sàng
+// =========================================================================
+// MODULE 9: KHỞI TẠO ỨNG DỤNG KHI TẢI TRANG (APPLICATION LIFECYCLE)
+// =========================================================================
+
 document.addEventListener("DOMContentLoaded", () => {
+    // 1. Khôi phục dữ liệu từ LocalStorage
     initStorage();
     document.body.classList.remove("theme-pink", "theme-vintage", "theme-emerald");
 
+    // 2. Render tất cả các phần giao diện
     renderAllSections();
     updateShopBrandingUI();
     updateAuthUI();
@@ -1959,13 +2304,13 @@ document.addEventListener("DOMContentLoaded", () => {
     initFlashSaleTimer();
     syncPendingOrdersToGoogleSheet();
 
-    // Cập nhật mã QR xem trước khi khách nhập SĐT trong form đặt hàng
+    // 3. Lắng nghe sự kiện cập nhật mã QR xem trước khi nhập số điện thoại
     document.getElementById("ck-phone")?.addEventListener("input", () => {
         const { total } = calculateOrderTotals();
         updateCheckoutLiveQRPreview(total);
     });
 
-    // Sự kiện lọc sách
+    // 4. Lắng nghe các sự kiện bộ lọc kho sách
     document.getElementById("filter-category")?.addEventListener("change", e => {
         AppState.currentFilter.category = e.target.value;
         renderCatalogue();
@@ -1983,7 +2328,7 @@ document.addEventListener("DOMContentLoaded", () => {
         renderCatalogue();
     });
 
-    // Tìm kiếm nhanh từ Header
+    // 5. Tìm kiếm nhanh từ ô tìm kiếm trên Header
     document.getElementById("header-search-input")?.addEventListener("input", e => {
         AppState.currentFilter.keyword = e.target.value;
         const fKw = document.getElementById("filter-keyword");
@@ -1991,4 +2336,3 @@ document.addEventListener("DOMContentLoaded", () => {
         renderCatalogue();
     });
 });
-

@@ -1,5 +1,22 @@
 /* =========================================================================
    STYLESHEET - MỘC MIÊN BOOKS (GIAO DIỆN XANH BLUE PASTEL HIỆN ĐẠI & DỊU MẮT)
+   Đề tài: Hệ thống Thương mại Điện tử bán sách trực tuyến & VietQR Napas 247
+   =========================================================================
+   MỤC LỤC BẢNG KIỂU DÁNG CSS (CSS DIRECTORY):
+   1. ROOT VARIABLES & THEMES        : Bảng mã màu chủ đạo (Blue, Pink, Vintage, Emerald)
+   2. TOPBAR & SITE HEADER           : Thanh tiện ích, logo thương hiệu, tìm kiếm, nút điều hướng
+   3. MENU ĐIỀU HƯỚNG & THANH TAB    : Menu danh mục, thanh trượt ngang trên máy tính & mobile
+   4. BANNER CAROUSEL & CUTE HEADING : Khung ảnh quảng cáo, tiêu đề chữ viết tay nghệ thuật
+   5. DANH MỤC TRÒN BUBBLE STYLE     : Khung tròn hiển thị thể loại sách
+   6. THẺ SẢN PHẨM (PRODUCT CARDS)   : Khung hiển thị sách, huy hiệu giảm giá, giá bán, nút mua
+   7. BỘ LỌC TÌM KIẾM SÁCH (FILTERS) : Thanh công cụ lọc theo giá, tác giả, thể loại, sắp xếp
+   8. QUY TRÌNH MUA SÁCH & DỊCH VỤ   : 4 bước mua sách tiện lợi, bọc quà, viết thiệp, VietQR
+   9. ĐÁNH GIÁ ĐỘC GIẢ & BLOG SÁCH   : Khung nhận xét từ khách hàng, bài viết tin tức
+   10. CHÂN TRANG (SITE FOOTER)      : Thông tin liên hệ, bản quyền, liên kết mạng xã hội
+   11. GIỎ HÀNG TRƯỢT (MINI CART)    : Drawer giỏ hàng trượt bên phải kèm backdrop mờ
+   12. KHUNG THANH TOÁN VIETQR NAPAS : Khung quét mã QR Napas 247, laser scanner, bảng ngân hàng
+   13. TOAST THÔNG BÁO & NÚT NỔI     : Thông báo góc phải, nút Zalo / Messenger / Hotline góc dưới
+   14. GIAO DIỆN ĐIỆN THOẠI (MOBILE) : Tối ưu responsive trên màn hình smartphone & tablet
    ========================================================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Allura&family=Quicksand:wght@400;500;600;700;800&display=swap');

@@ -2,8 +2,21 @@
 // CƠ SỞ DỮ LIỆU HỆ THỐNG NHÀ SÁCH MỘC MIÊN (MỘC MIÊN BOOKS)
 // Đề tài: Thiết kế hệ thống tự động hóa bán hàng và thanh toán VietQR trên di động
 // =========================================================================
+// MỤC LỤC CƠ SỞ DỮ LIỆU (DATABASE SCHEMA):
+// 1. SHOP_DEFAULT_CONFIG  : Cấu hình thông tin cửa hàng, VietQR, Google Sheets & OAuth
+// 2. VIETQR_BANKS         : Danh mục ngân hàng hỗ trợ chuẩn chuyển khoản Napas 247
+// 3. CATEGORIES           : Danh mục thể loại sách & set quà tặng
+// 4. PRODUCTS             : Danh mục sản phẩm sách chi tiết (giá, tác giả, tồn kho...)
+// 5. BLOG_POSTS           : Bài viết cẩm nang đọc sách & chính sách bán hàng
+// 6. CUSTOMER_FEEDBACKS   : Đánh giá và cảm nhận thực tế từ độc giả
+// 7. COUPONS              : Danh sách mã giảm giá và ưu đãi vận chuyển
+// =========================================================================
 
+// =========================================================================
+// 1. CẤU HÌNH THÔNG TIN CỬA HÀNG & TÍCH HỢP TỰ ĐỘNG HÓA
+// =========================================================================
 const SHOP_DEFAULT_CONFIG = {
+    // Thông tin thương hiệu & Liên hệ
     shopName: "Mộc Miên Books",
     legalName: "CÔNG TY TNHH MTV SÁCH & TRI THỨC MỘC MIÊN",
     slogan: "Mộc Miên – Gửi tri thức và yêu thương qua từng trang sách!",
@@ -11,30 +24,30 @@ const SHOP_DEFAULT_CONFIG = {
     zalo: "0869571734",
     email: "mocmienbooks@gmail.com",
     address: "175 P. Tây Sơn, Trung Liệt, Đống Đa, Hà Nội",
-    // Cấu hình đường dẫn mở khung chat các nền tảng mạng xã hội của Shop:
-    // - Messenger: https://m.me/<ID_hoặc_Username_Fanpage>
-    // - Zalo: https://zalo.me/<Số_Điện_Thoại_Zalo>
-    // - Instagram Direct: https://ig.me/m/<Username_Instagram>
-    // - TikTok: https://www.tiktok.com/@<Username_TikTok>
+
+    // Đường dẫn mạng xã hội chính thức
     facebookUrl: "https://www.facebook.com/p/M%E1%BB%99c-Mi%C3%AAn-Books-61588543816965/",
     messengerUrl: "https://m.me/61588543816965",
     zaloUrl: "https://zalo.me/0869571734",
     tiktokUrl: "https://www.tiktok.com/@mocmien.books",
     instagramUrl: "https://ig.me/m/mocmien.books",
-    // Cấu hình tài khoản nhận thanh toán VietQR mặc định (Có thể đổi trực tiếp trên web)
+
+    // Cấu hình thanh toán VietQR Napas 247 mặc định
     bankId: "MB",
     bankName: "MBBank - Ngân hàng TMCP Quân Đội",
     accountNo: "0869571734",
     accountName: "TIEM SACH MOC MIEN",
     qrTemplate: "compact2",
-    // Cấu hình tự động đổ dữ liệu đơn hàng về Google Sheets (Miễn phí 100% qua Apps Script)
-    // Dán URL Web App (https://script.google.com/macros/s/.../exec) vào googleSheetWebAppUrl bên dưới:
+
+    // Cấu hình tự động đồng bộ đơn hàng về Google Sheets (Google Apps Script Web App)
     googleSheetWebAppUrl: "https://script.google.com/macros/s/AKfycbwwnmNJvhW77HaXTrzTjiOmWjtzbJNPxrVJkiuMXppd96TgJ-tGpSGB5HsC39ESOsJs/exec",
-    // Cấu hình Google OAuth Client ID (Tạo miễn phí tại https://console.cloud.google.com/apis/credentials)
-    // Dán mã Client ID dạng xxxxxxxxxxxx.apps.googleusercontent.com vào đây nếu muốn bật Google One-Tap/Popup tự động
+
+    // Cấu hình Google OAuth Client ID (Google Identity Services)
     googleClientId: "748763547608-bh20tk4e6uf4fu5m6ukiemtlj7rfckda.apps.googleusercontent.com",
-    // Cấu hình Facebook App ID (Tạo tại https://developers.facebook.com/apps)
+
+    // Cấu hình Facebook App ID (Dành cho Facebook SDK)
     facebookAppId: "",
+
     // Tùy chọn mở rộng (Make.com Webhook / Google Form)
     makeWebhookUrl: "",
     googleFormActionUrl: "",
@@ -47,6 +60,9 @@ const SHOP_DEFAULT_CONFIG = {
     autoVerifySeconds: 5
 };
 
+// =========================================================================
+// 2. DANH MỤC NGÂN HÀNG HỖ TRỢ VIETQR (NAPAS 247)
+// =========================================================================
 const VIETQR_BANKS = [
     { id: "MB", name: "MBBank - Ngân hàng TMCP Quân Đội", shortName: "MBBank", bin: "970422" },
     { id: "VCB", name: "Vietcombank - Ngân hàng TMCP Ngoại Thương VN", shortName: "Vietcombank", bin: "970436" },
@@ -62,6 +78,9 @@ const VIETQR_BANKS = [
     { id: "SHB", name: "SHB - Ngân hàng TMCP Sài Gòn - Hà Nội", shortName: "SHB", bin: "970443" }
 ];
 
+// =========================================================================
+// 3. DANH MỤC THỂ LOẠI SÁCH & SET QUÀ TẶNG
+// =========================================================================
 const CATEGORIES = [
     {
         id: "van-hoc",
@@ -119,6 +138,9 @@ const CATEGORIES = [
     }
 ];
 
+// =========================================================================
+// 4. CƠ SỞ DỮ LIỆU SẢN PHẨM SÁCH & SET QUÀ TẶNG CHI TIẾT
+// =========================================================================
 const PRODUCTS = [
     // --- VĂN HỌC & TIỂU THUYẾT ---
     {
@@ -687,6 +709,9 @@ const PRODUCTS = [
     }
 ];
 
+// =========================================================================
+// 5. BÀI VIẾT CẨM NANG & CHÍNH SÁCH MUA HÀNG
+// =========================================================================
 const BLOG_POSTS = [
     {
         id: 1,
@@ -761,6 +786,9 @@ const BLOG_POSTS = [
     }
 ];
 
+// =========================================================================
+// 6. ĐÁNH GIÁ & CẢM NHẬN TỪ ĐỘC GIẢ
+// =========================================================================
 const CUSTOMER_FEEDBACKS = [
     {
         name: "Kiều Bảo Ngọc",
@@ -792,6 +820,9 @@ const CUSTOMER_FEEDBACKS = [
     }
 ];
 
+// =========================================================================
+// 7. DANH SÁCH MÃ GIẢM GIÁ & ƯU ĐÃI VẬN CHUYỂN
+// =========================================================================
 const COUPONS = {
     "MOCMIEN20": { code: "MOCMIEN20", discountPercent: 10, maxDiscount: 50000, desc: "Giảm 10% tối đa 50.000đ cho mọi đơn sách" },
     "SACHMOI30": { code: "SACHMOI30", discountFlat: 30000, minOrder: 150000, desc: "Giảm ngay 30.000đ cho đơn từ 150.000đ" },
