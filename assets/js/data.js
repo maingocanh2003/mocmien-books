@@ -45,9 +45,6 @@ const SHOP_DEFAULT_CONFIG = {
     // Cấu hình Google OAuth Client ID (Google Identity Services)
     googleClientId: "748763547608-bh20tk4e6uf4fu5m6ukiemtlj7rfckda.apps.googleusercontent.com",
 
-    // Cấu hình Facebook App ID (Dành cho Facebook SDK)
-    facebookAppId: "",
-
     // Tùy chọn mở rộng (Make.com Webhook / Google Form)
     makeWebhookUrl: "",
     googleFormActionUrl: "",

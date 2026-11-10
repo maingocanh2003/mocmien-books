@@ -20,11 +20,8 @@
     <!-- Google Identity Services (GIS) cho đăng nhập Google -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 
-    <!-- Facebook SDK for JavaScript cho đăng nhập Facebook -->
-    <script async defer crossorigin="anonymous" src="https://connect.facebook.net/vi_VN/sdk.js"></script>
-
     <!-- Custom Stylesheet (Chuẩn phong cách bptmai02.id.vn) -->
-    <link href="assets/css/style.css?v=20261109-6" rel="stylesheet">
+    <link href="assets/css/style.css?v=20261110-1" rel="stylesheet">
 </head>
 
 <body>
@@ -988,19 +985,11 @@
                 <div id="login-modal-body-wrapper">
                     <div class="modal-body p-4 text-center">
                         <h4 class="fw-bold text-uppercase mb-3" style="color:var(--primary);">Đăng Nhập Thành Viên</h4>
-                        <div class="row g-2 mb-3">
-                            <div class="col-6">
-                                <button type="button" class="btn btn-outline-danger w-100 rounded-pill small fw-bold"
-                                    onclick="loginWithOAuth('Google')">
-                                    <i class="fa-brands fa-google me-1"></i> Google
-                                </button>
-                            </div>
-                            <div class="col-6">
-                                <button type="button" class="btn btn-outline-primary w-100 rounded-pill small fw-bold"
-                                    onclick="loginWithOAuth('Facebook')">
-                                    <i class="fa-brands fa-facebook me-1"></i> Facebook
-                                </button>
-                            </div>
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-outline-danger w-100 rounded-pill small fw-bold py-2"
+                                onclick="loginWithOAuth('Google')">
+                                <i class="fa-brands fa-google me-1"></i> Tiếp tục với Google
+                            </button>
                         </div>
                         <div class="small text-muted mb-3">— Hoặc tài khoản Mộc Miên —</div>
                         <form onsubmit="handleLoginFormSubmit(event)">
@@ -1023,8 +1012,8 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/js/data.js?v=20261109-6"></script>
-    <script src="assets/js/app.js?v=20261109-6"></script>
+    <script src="assets/js/data.js?v=20261110-1"></script>
+    <script src="assets/js/app.js?v=20261110-1"></script>
 </body>
 
 </html>

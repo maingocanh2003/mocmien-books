@@ -33,10 +33,9 @@
  *     syncAllPendingOrdersToSheet(), reopenOrderQR(), exportOrdersToCSV(),
  *     openAutomationConfigModal(), updateShopBrandingUI(), syncPendingOrdersToGoogleSheet(), submitContactForm()
  *
- * MODULE 8: QUẢN LÝ TÀI KHOẢN, XÁC THỰC GOOGLE & FACEBOOK
+ * MODULE 8: QUẢN LÝ TÀI KHOẢN & XÁC THỰC GOOGLE
  *   - openUserModal(), renderLoginModalContent(), handleLoginFormSubmit(), initGoogleIdentityServices(),
- *     handleGoogleCredentialResponse(), parseJwt(), loginWithOAuth(), openFacebookLoginPage(),
- *     renderFacebookVerificationModal(), completeFacebookLoginDirectly(), renderGoogleQuickLinkForm(),
+ *     handleGoogleCredentialResponse(), parseJwt(), loginWithOAuth(), renderGoogleQuickLinkForm(),
  *     handleGoogleQuickLinkSubmit(), completeLogin(), logoutUser(), updateAuthUI()
  *
  * MODULE 9: KHỞI TẠO ỨNG DỤNG KHI TẢI TRANG (APPLICATION LIFECYCLE)
@@ -67,8 +66,7 @@ const AppState = {
     activeOrderForQR: null,                 // Đơn hàng đang hiển thị mã QR thanh toán
     qrCountdownTimer: null,                 // Bộ đếm thời gian hiệu lực mã QR
     currentUser: null,                      // Thông tin tài khoản người dùng đã đăng nhập
-    pendingAction: null,                    // Hành động đang chờ thực hiện sau khi đăng nhập (addToCart, buyNow, checkout)
-    isWaitingForFacebook: false             // Cờ kiểm soát trạng thái chờ khách xác minh trên Facebook
+    pendingAction: null                     // Hành động đang chờ thực hiện sau khi đăng nhập (addToCart, buyNow, checkout)
 };
 
 /**
@@ -85,7 +83,6 @@ function initStorage() {
                 ...parsed,
                 googleSheetWebAppUrl: SHOP_DEFAULT_CONFIG.googleSheetWebAppUrl || parsed.googleSheetWebAppUrl || "",
                 googleClientId: SHOP_DEFAULT_CONFIG.googleClientId || parsed.googleClientId || "",
-                facebookAppId: SHOP_DEFAULT_CONFIG.facebookAppId || parsed.facebookAppId || "",
                 makeWebhookUrl: SHOP_DEFAULT_CONFIG.makeWebhookUrl || parsed.makeWebhookUrl || "",
                 googleFormActionUrl: SHOP_DEFAULT_CONFIG.googleFormActionUrl || parsed.googleFormActionUrl || ""
             };
@@ -1800,7 +1797,7 @@ async function submitContactForm(event) {
 }
 
 // =========================================================================
-// MODULE 8: QUẢN LÝ TÀI KHOẢN, XÁC THỰC GOOGLE & FACEBOOK
+// MODULE 8: QUẢN LÝ TÀI KHOẢN & XÁC THỰC GOOGLE
 // =========================================================================
 
 /**
@@ -1860,19 +1857,11 @@ function renderLoginModalContent() {
         wrapper.innerHTML = `
             <div class="modal-body p-4 text-center">
                 <h4 class="fw-bold text-uppercase mb-3" style="color:var(--primary);">Đăng Nhập Thành Viên</h4>
-                <div class="row g-2 mb-3">
-                    <div class="col-6">
-                        <button type="button" class="btn btn-outline-danger w-100 rounded-pill small fw-bold"
-                            onclick="loginWithOAuth('Google')">
-                            <i class="fa-brands fa-google me-1"></i> Google
-                        </button>
-                    </div>
-                    <div class="col-6">
-                        <button type="button" class="btn btn-outline-primary w-100 rounded-pill small fw-bold"
-                            onclick="loginWithOAuth('Facebook')">
-                            <i class="fa-brands fa-facebook me-1"></i> Facebook
-                        </button>
-                    </div>
+                <div class="mb-3">
+                    <button type="button" class="btn btn-outline-danger w-100 rounded-pill small fw-bold py-2"
+                        onclick="loginWithOAuth('Google')">
+                        <i class="fa-brands fa-google me-1"></i> Tiếp tục với Google
+                    </button>
                 </div>
                 <div class="small text-muted mb-3">— Hoặc tài khoản Mộc Miên —</div>
                 <form onsubmit="handleLoginFormSubmit(event)">
@@ -1973,10 +1962,10 @@ function parseJwt(token) {
 }
 
 /**
- * Xử lý đăng nhập bằng Google hoặc Facebook
- * @param {string} provider "Google" hoặc "Facebook"
+ * Xử lý đăng nhập tài khoản bằng Google OAuth
+ * @param {string} provider Tên nhà cung cấp (mặc định "Google")
  */
-function loginWithOAuth(provider) {
+function loginWithOAuth(provider = "Google") {
     if (provider === "Google") {
         const clientId = AppState.config.googleClientId || SHOP_DEFAULT_CONFIG.googleClientId;
         
@@ -2020,139 +2009,7 @@ function loginWithOAuth(provider) {
 
         // 2. Nếu chưa cấu hình Google Client ID -> Mở form liên kết Gmail (không hỏi địa chỉ giao hàng)
         renderGoogleQuickLinkForm();
-    } else if (provider === "Facebook") {
-        const appId = AppState.config.facebookAppId || SHOP_DEFAULT_CONFIG.facebookAppId;
-        
-        // 1. Nếu đã có Facebook App ID và SDK Facebook sẵn sàng -> Mở hộp thoại xác thực FB chính thức
-        if (appId && window.FB) {
-            try {
-                showToast("Đang kết nối tới Facebook để xác minh...", "info");
-                FB.login(function(response) {
-                    if (response.authResponse) {
-                        FB.api('/me', { fields: 'id,name,email,picture' }, function(userInfo) {
-                            completeLogin({
-                                name: userInfo.name || "Khách hàng Facebook",
-                                email: userInfo.email || "",
-                                account: userInfo.email || userInfo.id || userInfo.name,
-                                avatar: userInfo.picture?.data?.url || "",
-                                provider: "Facebook"
-                            });
-                        });
-                    } else {
-                        showToast("Đã hủy xác minh đăng nhập Facebook", "warning");
-                    }
-                }, { scope: 'public_profile,email' });
-                return;
-            } catch (err) {
-                console.warn("Lỗi gọi FB.login:", err);
-            }
-        }
-
-        // 2. Chuyển đến trang đăng nhập Facebook chính thức để yêu cầu nhập tài khoản xác minh
-        openFacebookLoginPage();
     }
-}
-
-/**
- * Mở cửa sổ Facebook chính thức để người dùng xác minh tài khoản
- * Tự động giám sát khi người dùng đóng cửa sổ hoặc quay lại trang web Mộc Miên để hoàn tất đăng nhập
- */
-function openFacebookLoginPage() {
-    const fbLoginUrl = "https://www.facebook.com/login.php";
-    AppState.isWaitingForFacebook = true;
-    showToast("Đang mở trang đăng nhập Facebook...", "info");
-    
-    // Mở cửa sổ đăng nhập Facebook chính thức
-    let fbWindow = null;
-    try {
-        fbWindow = window.open(fbLoginUrl, "_blank", "width=650,height=720,top=100,left=200,scrollbars=yes,status=yes");
-    } catch (e) {
-        console.warn("Popup blocked:", e);
-    }
-
-    renderFacebookVerificationModal();
-
-    // 1. Theo dõi khi người dùng đóng cửa sổ Facebook -> Tự động đăng nhập
-    const checkWindowTimer = setInterval(() => {
-        if (fbWindow && fbWindow.closed) {
-            clearInterval(checkWindowTimer);
-            if (AppState.isWaitingForFacebook) {
-                completeFacebookLoginDirectly();
-            }
-        }
-    }, 1000);
-
-    // 2. Theo dõi khi người dùng chuyển tab quay lại trang web Mộc Miên -> Tự động đăng nhập
-    const onWindowFocus = () => {
-        if (AppState.isWaitingForFacebook) {
-            setTimeout(() => {
-                if (AppState.isWaitingForFacebook) {
-                    window.removeEventListener("focus", onWindowFocus);
-                    clearInterval(checkWindowTimer);
-                    completeFacebookLoginDirectly();
-                }
-            }, 800);
-        }
-    };
-    window.addEventListener("focus", onWindowFocus);
-}
-
-/**
- * Hiển thị giao diện modal chờ xác minh tài khoản Facebook
- */
-function renderFacebookVerificationModal() {
-    const wrapper = document.getElementById("login-modal-body-wrapper");
-    if (!wrapper) return;
-
-    wrapper.innerHTML = `
-        <div class="modal-body p-4 text-center">
-            <div class="mb-3">
-                <span class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width:72px;height:72px;background:#eff6ff;color:#1877f2;font-size:34px;border:3px solid #bfdbfe;">
-                    <i class="fa-brands fa-facebook"></i>
-                </span>
-            </div>
-            <h4 class="fw-bold mb-1" style="color:var(--primary);">Xác Minh Tài Khoản Facebook</h4>
-            <p class="text-muted small mb-3">Đã chuyển tới trang đăng nhập Facebook.com để bạn xác minh tài khoản</p>
-
-            <div class="p-3 rounded-4 bg-light border small text-start mb-3">
-                <div class="d-flex align-items-center gap-2 mb-2 text-primary fw-bold">
-                    <i class="fa-solid fa-spinner fa-spin"></i> Đang chờ bạn đăng nhập trên Facebook...
-                </div>
-                <div class="text-secondary small mb-1">
-                    Bạn chỉ cần nhập tài khoản Facebook trên cửa sổ vừa mở.
-                </div>
-                <div class="text-muted small">
-                    <i class="fa-solid fa-circle-check text-success me-1"></i> Khi bạn đăng nhập xong và quay lại trang web Mộc Miên, hệ thống sẽ tự động kết nối và tiếp tục thao tác mua hàng của bạn ngay!
-                </div>
-            </div>
-
-            <div class="d-grid gap-2">
-                <button type="button" class="btn btn-primary rounded-pill fw-bold py-2 text-white" onclick="completeFacebookLoginDirectly()">
-                    <i class="fa-brands fa-facebook me-1"></i> Tôi Đã Đăng Nhập Xong (Tiếp Tục Ngay)
-                </button>
-                <a href="https://www.facebook.com/login.php" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill fw-bold">
-                    <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Mở lại trang Facebook nếu chưa thấy
-                </a>
-                <button type="button" class="btn btn-sm btn-link text-muted text-decoration-none" onclick="AppState.isWaitingForFacebook = false; renderLoginModalContent();">
-                    <i class="fa-solid fa-arrow-left me-1"></i> Quay lại
-                </button>
-            </div>
-        </div>
-    `;
-}
-
-/**
- * Hoàn tất xác minh Facebook và tự động tiếp tục tác vụ mua hàng của khách
- */
-function completeFacebookLoginDirectly() {
-    AppState.isWaitingForFacebook = false;
-    const user = {
-        name: "Thành viên Facebook",
-        account: "Facebook Member",
-        provider: "Facebook",
-        avatar: "https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg"
-    };
-    completeLogin(user);
 }
 
 /**
